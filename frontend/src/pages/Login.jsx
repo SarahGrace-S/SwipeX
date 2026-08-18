@@ -56,7 +56,13 @@ export default function Login() {
         if (data.detail) {
           setError(data.detail);
         } else {
-          setError('Invalid email or password.');
+          const keys = Object.keys(data);
+          if (keys.length > 0) {
+            const firstError = data[keys[0]];
+            setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
+          } else {
+            setError('Invalid email or password.');
+          }
         }
       } else {
         setError('Connection error. Please make sure the backend server is running.');

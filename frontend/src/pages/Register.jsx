@@ -67,10 +67,22 @@ export default function Register() {
           setError(Array.isArray(data.email) ? data.email[0] : data.email);
         } else if (data.password) {
           setError(Array.isArray(data.password) ? data.password[0] : data.password);
+        } else if (data.full_name) {
+          setError(Array.isArray(data.full_name) ? data.full_name[0] : data.full_name);
+        } else if (data.role) {
+          setError(Array.isArray(data.role) ? data.role[0] : data.role);
+        } else if (data.detail) {
+          setError(data.detail);
         } else if (data.non_field_errors) {
           setError(data.non_field_errors[0]);
         } else {
-          setError('Failed to register. Please check your inputs.');
+          const keys = Object.keys(data);
+          if (keys.length > 0) {
+            const firstError = data[keys[0]];
+            setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
+          } else {
+            setError('Failed to register. Please check your inputs.');
+          }
         }
       } else {
         setError('Connection error. Please make sure the backend server is running.');
