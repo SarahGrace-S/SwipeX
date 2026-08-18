@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at top right, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.06) 50%, rgba(0,0,0,0) 100%), #0b0f19;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg,#c084fc 0%,#818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.glass-input {
+  background: rgba(15,23,42,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: white;
+  transition: all .2s ease;
+}
+
+.glass-input:focus {
+  border-color: #c084fc;
+  box-shadow: 0 0 12px rgba(192,132,252,.2);
+  outline: none;
+}
