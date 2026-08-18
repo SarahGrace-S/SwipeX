@@ -25,10 +25,11 @@ class UserRegistrationView(generics.CreateAPIView):
                 "message": "User registered successfully."
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
-            import traceback
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Registration failed: {e}", exc_info=True)
             return Response({
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                "error": "An error occurred during registration. Please verify your inputs and try again."
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
