@@ -927,3 +927,96 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(recipient=self.request.user)
+
+
+class AIResumeAnalysisView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.resume:
+            return Response({'error': 'No resume uploaded yet.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if user.resume_score == 0:
+            return Response({
+                'resume_score': 0,
+                'strengths': [],
+                'gaps': [],
+                'improvements': []
+            }, status=status.HTTP_200_OK)
+            
+        return Response({
+            'resume_score': user.resume_score,
+            'strengths': [s for s in user.resume_strengths.split('\n') if s],
+            'gaps': [g for g in user.resume_gaps.split('\n') if g],
+            'improvements': [imp for imp in user.resume_improvements.split('\n') if imp]
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if not user.resume:
+            return Response({'error': 'No resume uploaded yet. Please upload one in your profile.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            from users.resume_parser import extract_text_from_file
+            resume_text = extract_text_from_file(user.resume.path)
+        except Exception:
+            resume_text = ""
+            
+        user_profile = {
+            'skills': user.skills,
+            'experience': user.experience,
+            'education': user.education,
+        }
+        
+        from .ai_service import get_resume_analysis
+        result = get_resume_analysis(resume_text, user_profile)
+        
+        # Save to database
+        user.resume_score = result.get('resume_score', 0)
+        user.resume_strengths = '\n'.join(result.get('strengths', []))
+        user.resume_gaps = '\n'.join(result.get('gaps', []))
+        user.resume_improvements = '\n'.join(result.get('improvements', []))
+        user.save()
+        
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class AICareerAssistantView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        prompt = request.data.get('prompt')
+        if not prompt:
+            return Response({'error': 'Prompt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = request.user
+        user_profile = {
+            'skills': user.skills,
+            'experience': user.experience,
+            'education': user.education,
+            'degree': user.degree,
+            'preferred_location': user.preferred_location,
+            'preferred_job_type': user.preferred_job_type
+        }
+        
+        from .ai_service import get_career_assistant_response
+        result = get_career_assistant_response(prompt, user_profile)
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class AIGenerateJobDescView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        role = request.data.get('role')
+        skills = request.data.get('skills')
+        experience = request.data.get('experience')
+        
+        if not role:
+            return Response({'error': 'Role is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from .ai_service import generate_job_description
+        result = generate_job_description(role, skills, experience)
+        return Response(result, status=status.HTTP_200_OK)
+

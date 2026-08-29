@@ -52,6 +52,8 @@ export default function Sidebar({ isOpen, onClose }) {
     { name: 'Recommended', path: '/recommendations', icon: '✨' },
     { name: 'Saved Jobs', path: '/saved-jobs', icon: '★' },
     { name: 'Applied Jobs', path: '/applied-jobs', icon: '✓' },
+    { name: 'Resume Analysis', path: '/resume-analysis', icon: '📄' },
+    { name: 'Career Assistant', path: '/career-assistant', icon: '🤖' },
     { name: 'My Profile', path: '/profile', icon: '👤' },
     { name: 'Notifications', path: '/notifications', icon: '🔔' },
   ];

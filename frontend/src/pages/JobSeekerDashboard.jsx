@@ -135,6 +135,64 @@ export default function JobSeekerDashboard() {
             </div>
           </div>
 
+          {/* Personalized Career Dashboard Overview */}
+          <div className="glass-card p-6 rounded-3xl border border-purple-500/20 bg-purple-900/5 text-left space-y-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">👤 Personalized Career Dashboard</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400">🎯 Profile Match Score</span>
+                <span className="text-2xl font-black text-purple-400 mt-1 block">{analytics ? `${analytics.overall_ats_score}%` : '0%'}</span>
+              </div>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400">👀 Jobs Viewed</span>
+                <span className="text-2xl font-black text-white mt-1 block">{analytics?.total_viewed || 0}</span>
+              </div>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400">★ Jobs Liked (Saved)</span>
+                <span className="text-2xl font-black text-white mt-1 block">{analytics?.saved_jobs_count || 0}</span>
+              </div>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400">📝 Applications</span>
+                <span className="text-2xl font-black text-white mt-1 block">{analytics?.total_applied || 0}</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400 mb-2">Top Skills</span>
+                {user?.skills || user?.extracted_skills ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(new Set([
+                      ...(user.skills || '').split(','), 
+                      ...(user.extracted_skills || '').split(',')
+                    ]))
+                      .map(s => s.trim())
+                      .filter(Boolean)
+                      .slice(0, 8)
+                      .map((s, i) => (
+                        <span key={i} className="px-2.5 py-1 bg-purple-500/10 text-purple-300 border border-purple-500/20 rounded-lg text-xs font-bold">{s}</span>
+                      ))}
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-500 italic">No skills listed yet</span>
+                )}
+              </div>
+              
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <span className="block text-xs text-gray-400 mb-2">Recommended Skills to Acquire</span>
+                {analytics?.frequently_missing?.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {analytics.frequently_missing.slice(0, 8).map((s, i) => (
+                      <span key={i} className="px-2.5 py-1 bg-red-500/10 text-red-300 border border-red-500/20 rounded-lg text-xs font-bold">{s}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-500 italic">Looking good! No missing keywords found.</span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Metrics Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="glass-card p-4 rounded-2xl border border-purple-500/10">

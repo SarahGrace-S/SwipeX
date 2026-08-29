@@ -14,6 +14,7 @@ class JobSerializer(serializers.ModelSerializer):
     competition_level = serializers.SerializerMethodField()
     average_ats_score = serializers.SerializerMethodField()
     average_compatibility_score = serializers.SerializerMethodField()
+    ai_match_insights = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
@@ -134,8 +135,10 @@ class JobSerializer(serializers.ModelSerializer):
         return ats
 
     def get_match_score(self, obj):
-        _, comp, _, _, _, _ = self._get_skill_comparison(obj)
-        return comp
+        insights = self.get_ai_match_insights(obj)
+        if insights:
+            return insights['match_score']
+        return 0
 
     def get_matching_skills(self, obj):
         _, _, matching, _, _, _ = self._get_skill_comparison(obj)
@@ -173,6 +176,34 @@ class JobSerializer(serializers.ModelSerializer):
         from django.db.models import Avg
         avg = obj.applications.aggregate(Avg('compatibility_score'))['compatibility_score__avg']
         return int(avg) if avg is not None else 0
+
+    def get_ai_match_insights(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated or request.user.role != 'JOB_SEEKER':
+            return None
+            
+        user = request.user
+        user_profile = {
+            'skills': user.skills,
+            'extracted_skills': user.extracted_skills,
+            'experience': user.experience,
+            'education': user.education,
+            'degree': user.degree,
+            'preferred_location': user.preferred_location,
+            'preferred_job_type': user.preferred_job_type
+        }
+        job_details = {
+            'title': obj.title,
+            'company': obj.company,
+            'location': obj.location,
+            'skills': obj.skills,
+            'description': obj.description,
+            'experience': obj.experience,
+            'job_type': obj.job_type
+        }
+        
+        from .ai_service import get_fallback_analysis
+        return get_fallback_analysis(user_profile, job_details)
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):

@@ -17,4 +17,7 @@ urlpatterns = [
     path('analytics/', views.AnalyticsView.as_view(), name='analytics'),
     path('seeker-analytics/', views.JobSeekerAnalyticsView.as_view(), name='seeker-analytics'),
     path('recommendations/', views.RecommendationView.as_view(), name='recommendations'),
+    path('resume-analysis/', views.AIResumeAnalysisView.as_view(), name='ai-resume-analysis'),
+    path('career-assistant/', views.AICareerAssistantView.as_view(), name='ai-career-assistant'),
+    path('generate-job-description/', views.AIGenerateJobDescView.as_view(), name='ai-generate-job-description'),
 ]

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <div className="glass-card rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-purple-500/10 relative overflow-hidden">
       {/* Subtle glow */}
@@ -128,9 +129,77 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
           </div>
         )}
 
-        {/* Description */}
-        {job.description && (
-          <p className="text-gray-400 text-xs leading-relaxed mb-6 line-clamp-3">{job.description}</p>
+        {/* View Details Toggle Button */}
+        <div className="mb-5 flex justify-center">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-purple-300 font-bold text-xs transition-all uppercase tracking-wider cursor-pointer"
+          >
+            {showDetails ? 'Hide Details ▲' : 'View Details 💼 ▼'}
+          </button>
+        </div>
+
+        {/* Expanded Detailed Analysis */}
+        {showDetails && (
+          <div className="bg-slate-950/40 border border-white/5 rounded-2xl p-5 mb-5 space-y-4 text-left animate-fadeIn">
+            {/* Match Score Title */}
+            <div className="flex items-center gap-2 text-white font-extrabold text-sm pb-2 border-b border-white/5">
+              <span>🎯</span>
+              <span>{job.match_score || 0}% Match Score</span>
+              <span className="text-[10px] text-gray-500 font-normal uppercase tracking-wider ml-auto">SwipeX AI</span>
+            </div>
+
+            {/* Skills Breakdown */}
+            {job.ai_match_insights?.skills_breakdown && (
+              <div>
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Skill Breakdown</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {job.ai_match_insights.skills_breakdown.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`p-2 rounded-xl border flex items-center gap-1.5 ${
+                        item.status === 'skill gap' 
+                          ? 'bg-red-500/5 border-red-500/10 text-red-300' 
+                          : 'bg-emerald-500/5 border-emerald-500/10 text-emerald-300'
+                      }`}
+                    >
+                      <span className="font-bold">{item.icon}</span>
+                      <span className="font-semibold truncate">{item.skill}</span>
+                      <span className="text-[8px] uppercase tracking-wider ml-auto opacity-70">{item.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Why This Job Explanation */}
+            {job.ai_match_insights?.why_explanation && (
+              <div>
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">✨ Why this job matches you</h4>
+                <ul className="space-y-1.5 text-xs text-gray-300">
+                  {job.ai_match_insights.why_explanation.map((reason, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-purple-400 font-bold mt-0.5">•</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Full Job Description */}
+            {job.description && (
+              <div>
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Job Description</h4>
+                <p className="text-gray-400 text-xs leading-relaxed whitespace-pre-line">{job.description}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Regular clamped description when collapsed */}
+        {!showDetails && job.description && (
+          <p className="text-gray-400 text-xs leading-relaxed mb-6 line-clamp-3 text-left">{job.description}</p>
         )}
 
         {/* Action Buttons */}

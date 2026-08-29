@@ -24,6 +24,7 @@ import Notifications from './pages/Notifications';
 import Recommendations from './pages/Recommendations';
 import ResumeAnalysis from './pages/ResumeAnalysis';
 import ATSFeedback from './pages/ATSFeedback';
+import CareerAssistant from './pages/CareerAssistant';
 import Layout from './components/Layout';
 
 const LayoutWrapper = () => (
@@ -62,6 +63,7 @@ function App() {
           <Route path="/recommendations" element={<Recommendations />} />
           <Route path="/resume-analysis" element={<ResumeAnalysis />} />
           <Route path="/ats-feedback" element={<ATSFeedback />} />
+          <Route path="/career-assistant" element={<CareerAssistant />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" theme="dark" />

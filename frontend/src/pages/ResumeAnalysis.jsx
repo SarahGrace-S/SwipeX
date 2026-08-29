@@ -6,9 +6,12 @@ export default function ResumeAnalysis() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     fetchProfile();
+    fetchAIAnalysis();
   }, []);
 
   const fetchProfile = async () => {
@@ -19,6 +22,27 @@ export default function ResumeAnalysis() {
       setError('Failed to fetch profile analysis.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAIAnalysis = async () => {
+    try {
+      const res = await api.get('/api/resume-analysis/');
+      setAiAnalysis(res.data);
+    } catch (err) {
+      console.error('Failed to fetch AI resume analysis', err);
+    }
+  };
+
+  const handleRunAIAnalysis = async () => {
+    setAnalyzing(true);
+    try {
+      const res = await api.post('/api/resume-analysis/');
+      setAiAnalysis(res.data);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to trigger AI resume analysis.');
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -77,6 +101,75 @@ export default function ResumeAnalysis() {
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm">No specific technical skills were automatically detected.</p>
+              )}
+            </div>
+
+            {/* AI Resume Review Card */}
+            <div className="glass-card rounded-3xl p-6 border border-purple-500/20 bg-purple-950/5 text-left space-y-4">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📄</span>
+                  <h2 className="text-lg font-bold text-white">AI Resume Analysis</h2>
+                </div>
+                <button
+                  onClick={handleRunAIAnalysis}
+                  disabled={analyzing}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                >
+                  {analyzing ? 'Analyzing...' : (aiAnalysis && aiAnalysis.resume_score > 0 ? 'Recalculate Score' : 'Analyze Resume')}
+                </button>
+              </div>
+
+              {aiAnalysis && aiAnalysis.resume_score > 0 ? (
+                <div className="space-y-4">
+                  {/* Score */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full border-4 border-purple-500 flex items-center justify-center font-black text-xl text-purple-300">
+                      {aiAnalysis.resume_score}/100
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm">Resume Score</h4>
+                      <p className="text-xs text-gray-400">Based on industry-standard keywords and formatting guidelines</p>
+                    </div>
+                  </div>
+
+                  {/* Strengths & Improvements */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">✓ Strengths</h4>
+                      <ul className="space-y-1.5 text-xs text-gray-300">
+                        {aiAnalysis.strengths?.map((str, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="text-emerald-400 font-bold">✓</span>
+                            <span>{str}</span>
+                          </li>
+                        ))}
+                        {(!aiAnalysis.strengths || aiAnalysis.strengths.length === 0) && (
+                          <li className="text-gray-500 italic">No specific strengths calculated yet</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">⚠ Suggested Improvements</h4>
+                      <ul className="space-y-1.5 text-xs text-gray-300">
+                        {aiAnalysis.improvements?.map((imp, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <span className="text-amber-500 font-bold">⚠</span>
+                            <span>{imp}</span>
+                          </li>
+                        ))}
+                        {(!aiAnalysis.improvements || aiAnalysis.improvements.length === 0) && (
+                          <li className="text-gray-500 italic">No improvements calculated yet</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-xs text-gray-500">
+                  Click "Analyze Resume" to trigger a deep AI analysis of your resume and receive scoring and improvements!
+                </div>
               )}
             </div>
 

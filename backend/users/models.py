@@ -60,6 +60,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     preferred_location = models.CharField(max_length=255, blank=True, default='')
     projects = models.TextField(blank=True, default='')
     certificates = models.TextField(blank=True, default='')
+    
+    # AI Resume Analysis fields
+    resume_score = models.IntegerField(default=0)
+    resume_strengths = models.TextField(blank=True, default='')
+    resume_gaps = models.TextField(blank=True, default='')
+    resume_improvements = models.TextField(blank=True, default='')
 
     # Recruiter company fields
     company_name = models.CharField(max_length=255, blank=True, default='')

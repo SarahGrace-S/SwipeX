@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -14,6 +14,70 @@ export default function Register() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadGoogleScript = () => {
+      if (window.google) {
+        initializeGoogle();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        initializeGoogle();
+      };
+      document.body.appendChild(script);
+    };
+
+    const initializeGoogle = () => {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        console.warn("VITE_GOOGLE_CLIENT_ID is missing.");
+        return;
+      }
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCallback,
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleSignInDiv"),
+          { theme: "outline", size: "large", width: "100%" }
+        );
+      } catch (err) {
+        console.error("Google initialize failed:", err);
+      }
+    };
+
+    loadGoogleScript();
+  }, [formData.role]); // Reinitialize if role changes to make sure correct role is sent
+
+  const handleGoogleCallback = async (response) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/api/google-auth/', {
+        credential: response.credential,
+        role: formData.role
+      });
+      localStorage.setItem('access_token', res.data.access);
+      localStorage.setItem('refresh_token', res.data.refresh);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      
+      if (res.data.user.role === 'RECRUITER') {
+        navigate('/recruiter');
+      } else {
+        navigate('/jobseeker');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || 'Google Authentication failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -216,7 +280,23 @@ export default function Register() {
             </button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-gray-400">
+          <div className="relative my-5 flex items-center justify-center">
+            <div className="absolute inset-0 border-t border-white/5"></div>
+            <span className="relative px-3 bg-slate-900 text-xs text-gray-500 font-bold uppercase tracking-widest">or</span>
+          </div>
+
+          {!import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+            <button
+              onClick={() => alert("Google Client ID is missing. Please add VITE_GOOGLE_CLIENT_ID to your environment variables.")}
+              className="w-full py-3.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all font-bold text-sm tracking-wide flex items-center justify-center gap-2"
+            >
+              <span className="text-base">🌐</span> Continue with Google (Mock)
+            </button>
+          ) : (
+            <div id="googleSignInDiv" className="w-full flex justify-center"></div>
+          )}
+
+          <div className="mt-6 text-center text-sm text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors duration-200">
               Sign In
