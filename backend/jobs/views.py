@@ -954,31 +954,57 @@ class AIResumeAnalysisView(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
+
+        # Check if a new resume file was uploaded in this request
+        if 'resume' in request.FILES:
+            uploaded_file = request.FILES['resume']
+            import os
+            ext = os.path.splitext(uploaded_file.name)[1].lower()
+            if ext not in ['.pdf', '.docx', '.doc', '.txt']:
+                return Response({'error': 'Unsupported file format. Please upload a PDF or DOCX resume.'}, status=status.HTTP_400_BAD_REQUEST)
+            if uploaded_file.size > 5 * 1024 * 1024:
+                return Response({'error': 'File size exceeds 5MB limit. Please upload a smaller file.'}, status=status.HTTP_400_BAD_REQUEST)
+            if uploaded_file.size == 0:
+                return Response({'error': 'The uploaded file is empty. Please upload a valid resume.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.resume = uploaded_file
+            user.save(update_fields=['resume'])
+
+            try:
+                from users.resume_parser import parse_resume
+                parsed_data = parse_resume(user.resume.path)
+                user.extracted_skills = ', '.join(parsed_data.get('skills', []))
+                user.resume_summary = parsed_data.get('summary', '')
+                user.save(update_fields=['extracted_skills', 'resume_summary'])
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Resume parsing warning: {e}")
+
         if not user.resume:
-            return Response({'error': 'No resume uploaded yet. Please upload one in your profile.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response({'error': 'No resume uploaded yet. Please upload a PDF or DOCX file.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             from users.resume_parser import extract_text_from_file
             resume_text = extract_text_from_file(user.resume.path)
         except Exception:
             resume_text = ""
-            
+
         user_profile = {
             'skills': user.skills,
             'experience': user.experience,
             'education': user.education,
         }
-        
+
         from .ai_service import get_resume_analysis
         result = get_resume_analysis(resume_text, user_profile)
-        
+
         # Save to database
         user.resume_score = result.get('resume_score', 0)
         user.resume_strengths = '\n'.join(result.get('strengths', []))
         user.resume_gaps = '\n'.join(result.get('gaps', []))
         user.resume_improvements = '\n'.join(result.get('improvements', []))
-        user.save()
-        
+        user.save(update_fields=['resume_score', 'resume_strengths', 'resume_gaps', 'resume_improvements'])
+
         return Response(result, status=status.HTTP_200_OK)
 
 

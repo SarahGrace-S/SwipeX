@@ -362,11 +362,15 @@ def get_fallback_career_assistant_response(prompt, user_profile):
     prompt_lower = prompt.lower()
     skills = user_profile.get('skills') or 'none'
     
-    if "skill" in prompt_lower or "improve" in prompt_lower or "what should i learn" in prompt_lower:
-        response = f"Based on your profile, you have skills like **{skills}**. To stand out in today's job market, we recommend focusing on high-demand cloud and backend tools such as **AWS**, **Docker**, and modern container orchestration. Additionally, practicing **System Design** concepts will help you clear technical rounds."
-    elif "resume" in prompt_lower or "cv" in prompt_lower or "improve my resume" in prompt_lower:
+    if "resume" in prompt_lower or "cv" in prompt_lower:
         response = "To improve your resume, make sure you use the **STAR method** (Situation, Task, Action, Result) for describing your project bullet points. For example, instead of 'Wrote Django code', use 'Developed secure Django APIs that reduced latency by 15%'. Ensure you match the keywords from target job descriptions."
-    elif "jobs" in prompt_lower or "apply" in prompt_lower:
+    elif "shortlist" in prompt_lower or "interview" in prompt_lower:
+        response = "To increase your shortlisting rate, focus on: 1) Tailoring your skills to match the exact keywords in job postings, 2) Ensuring your ATS score is above 80% on our Resume Analysis page, and 3) Applying early to new jobs where competition is still low (under 5 applicants)."
+    elif "backend" in prompt_lower:
+        response = "For backend developer roles, core industry requirements include: strong proficiency in **Python (Django/FastAPI)** or **Node.js/Go**, relational databases (**PostgreSQL**), caching (**Redis**), API design (**REST/GraphQL**), and cloud basics (**AWS/Docker**)."
+    elif "skill" in prompt_lower or "learn" in prompt_lower:
+        response = f"Based on your profile, you have skills like **{skills}**. To stand out in today's job market, we recommend focusing on high-demand cloud and backend tools such as **AWS**, **Docker**, and modern container orchestration. Additionally, practicing **System Design** concepts will help you clear technical rounds."
+    elif "job" in prompt_lower or "apply" in prompt_lower:
         pref_job = user_profile.get('preferred_job_type') or 'Software Development'
         pref_loc = user_profile.get('preferred_location') or 'remote'
         response = f"Since your preferred job type is **{pref_job}** and your preferred location is **{pref_loc}**, you should browse matching roles in our Discover tab! We have calculated compatibility scores on your recommended jobs list to help you target roles where you have a strong match."

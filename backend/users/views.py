@@ -16,6 +16,7 @@ class UserRegistrationView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
+        from rest_framework.exceptions import ValidationError
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -24,6 +25,8 @@ class UserRegistrationView(generics.CreateAPIView):
                 "user": UserSerializer(user).data,
                 "message": "User registered successfully."
             }, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)

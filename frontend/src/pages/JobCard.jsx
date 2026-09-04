@@ -203,27 +203,27 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-4 pt-2">
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/5">
           <button
             onClick={onSwipeLeft}
-            className="w-14 h-14 rounded-full border-2 border-red-500/30 bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 text-2xl transition-all duration-300 hover:scale-110 active:scale-95"
-            title="Skip"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
+            title="Pass on this job (Swipe Left)"
           >
-            ✕
+            <span className="text-base">←</span> Pass
           </button>
           <button
             onClick={() => onSwipeRight('SAVED')}
-            className="w-14 h-14 rounded-full border-2 border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-2xl transition-all duration-300 hover:scale-110 active:scale-95"
-            title="Save"
+            className="w-12 h-12 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-lg font-black transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer shadow-sm"
+            title="Save for Later"
           >
             ★
           </button>
           <button
             onClick={() => onSwipeRight('APPLIED')}
-            className="w-14 h-14 rounded-full border-2 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl transition-all duration-300 hover:scale-110 active:scale-95"
-            title="Apply"
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm"
+            title="Apply / Interested (Swipe Right)"
           >
-            ✓
+            Interested <span className="text-base">→</span>
           </button>
         </div>
       </div>

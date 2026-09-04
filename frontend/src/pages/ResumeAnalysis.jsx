@@ -34,6 +34,43 @@ export default function ResumeAnalysis() {
     }
   };
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ['.pdf', '.docx', '.doc', '.txt'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) {
+      setUploadError('Please upload a supported format (.pdf or .docx).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+      const res = await api.post('/api/resume-analysis/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setAiAnalysis(res.data);
+      await fetchProfile();
+    } catch (err) {
+      setUploadError(err.response?.data?.error || 'Failed to process resume.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleRunAIAnalysis = async () => {
     setAnalyzing(true);
     try {
@@ -71,13 +108,34 @@ export default function ResumeAnalysis() {
       </div>
 
       {!profile.resume ? (
-        <div className="glass-card p-12 text-center rounded-3xl border border-amber-500/30 bg-amber-500/5">
-          <div className="text-6xl mb-4">📄</div>
-          <h2 className="text-xl font-bold text-amber-400 mb-2">No Resume Uploaded</h2>
-          <p className="text-amber-200/70 mb-6">You need to upload a resume in your profile to see the ATS analysis.</p>
-          <Link to="/profile" className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl transition-all">
-            Upload Resume
-          </Link>
+        <div className="glass-card p-10 text-center rounded-3xl border border-purple-500/30 bg-purple-500/5 max-w-2xl mx-auto">
+          <div className="text-5xl mb-3">📄</div>
+          <h2 className="text-xl font-bold text-white mb-2">Upload Your Resume for AI Analysis</h2>
+          <p className="text-gray-400 text-xs mb-6 max-w-md mx-auto">
+            Upload your resume in PDF or Word format (max 5MB). Our AI will parse your technical skills, analyze formatting, and compute your personalized ATS & match scores.
+          </p>
+
+          {uploadError && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl">
+              ⚠️ {uploadError}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <label className="cursor-pointer px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg hover:shadow-purple-500/25">
+              <span>{uploading ? 'Processing & Analyzing...' : 'Select Resume File (.pdf, .docx)'}</span>
+              <input
+                type="file"
+                accept=".pdf,.docx,.doc,.txt"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <Link to="/profile" className="px-5 py-3 border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-xl transition-all">
+              Manual Profile Setup →
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -164,6 +222,15 @@ export default function ResumeAnalysis() {
                         )}
                       </ul>
                     </div>
+                  </div>
+
+                  {/* Documented Scoring Criteria */}
+                  <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-[11px] text-gray-400 space-y-1 mt-3">
+                    <span className="font-bold text-gray-300 block text-xs">📊 Documented Scoring Criteria:</span>
+                    <p>• <strong className="text-gray-300">Content Structure & Depth (30%):</strong> Clean headings, standard sections, and comprehensive descriptions.</p>
+                    <p>• <strong className="text-gray-300">Technical Skills Coverage (35%):</strong> Standard technology keywords matching industry-standard job requirements.</p>
+                    <p>• <strong className="text-gray-300">Experience Completeness (20%):</strong> Work history duration, roles, and measurable outcomes.</p>
+                    <p>• <strong className="text-gray-300">Education & Qualifications (15%):</strong> Listed degree, institutions, and relevant certifications.</p>
                   </div>
                 </div>
               ) : (
