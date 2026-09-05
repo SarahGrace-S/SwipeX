@@ -18,12 +18,13 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Email format validation: standard RFC 5322 regex
+  // Email format validation: exact regex & standard domain handling
   const validateEmailFormat = (val) => {
-    if (!val || !val.trim()) return 'Email address is required.';
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(val.trim())) {
-      return 'Please enter a valid email address (e.g. name@example.com).';
+    const trimmed = (val || '').trim();
+    if (!trimmed) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      return 'Please enter a valid email address.';
     }
     return '';
   };
@@ -49,10 +50,12 @@ export default function Register() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // If the field was already touched and had an error, revalidate to clear error when corrected
-    if (touched[name]) {
+    // If an error is currently displayed on this field, clear it immediately once the input becomes valid
+    if (fieldErrors[name]) {
       const err = validateField(name, value);
-      setFieldErrors((prev) => ({ ...prev, [name]: err }));
+      if (!err) {
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+      }
     }
 
     if (serverError) setServerError('');

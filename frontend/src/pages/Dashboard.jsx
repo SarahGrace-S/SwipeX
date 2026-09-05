@@ -24,7 +24,7 @@ export default function Dashboard() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
-    navigate('/');
+    window.location.href = '/';
   };
 
   if (!user) {

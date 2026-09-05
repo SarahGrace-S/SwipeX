@@ -116,12 +116,8 @@ class JobViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(posted_by=user)
             elif user.role == 'JOB_SEEKER':
                 queryset = queryset.filter(is_active=True)
-                params = self.request.query_params
-                has_search_filters = any(params.get(k) for k in ['search', 'location', 'skills', 'experience', 'company', 'company_type', 'job_type', 'salary_min', 'salary_max', 'remote'])
-                if self.action == 'list' and not has_search_filters:
-                    swiped_ids = SwipeHistory.objects.filter(user=user).values_list('job_id', flat=True)
-                    applied_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
-                    queryset = queryset.exclude(id__in=set(swiped_ids).union(set(applied_ids)))
+                applied_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
+                queryset = queryset.exclude(id__in=applied_ids)
         else:
             queryset = queryset.filter(is_active=True)
 

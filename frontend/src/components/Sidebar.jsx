@@ -39,13 +39,14 @@ export default function Sidebar({ isOpen, onClose }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
-    navigate('/');
+    setUser(null);
+    window.location.href = '/';
   };
 
   const isRecruiter = user?.role === 'RECRUITER';
 
   const guestLinks = [
-    { name: 'Discover Jobs', path: '/', icon: '⚡' },
+    { name: 'Discover Jobs', path: '/discover', icon: '⚡' },
     { name: 'Search Jobs', path: '/search', icon: '🔍' },
     { name: 'Saved Jobs', path: '/saved-jobs', icon: '★' },
     { name: 'Applied Jobs', path: '/applied-jobs', icon: '✓' },

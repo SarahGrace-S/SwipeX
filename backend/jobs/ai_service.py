@@ -95,6 +95,79 @@ def get_ai_analysis(user_profile, job_details):
         logger.error(f"Gemini API call failed: {e}. Falling back to rules-based analysis.")
         return get_fallback_analysis(user_profile, job_details)
 
+SKILL_SYNONYMS = {
+    'js': 'javascript',
+    'javascript': 'javascript',
+    'ts': 'typescript',
+    'typescript': 'typescript',
+    'py': 'python',
+    'python': 'python',
+    'react': 'react',
+    'react.js': 'react',
+    'reactjs': 'react',
+    'node': 'node.js',
+    'node.js': 'node.js',
+    'nodejs': 'node.js',
+    'express': 'express.js',
+    'express.js': 'express.js',
+    'expressjs': 'express.js',
+    'vue': 'vue.js',
+    'vue.js': 'vue.js',
+    'vuejs': 'vue.js',
+    'angular': 'angular',
+    'angularjs': 'angular',
+    'postgres': 'postgresql',
+    'postgresql': 'postgresql',
+    'mongo': 'mongodb',
+    'mongodb': 'mongodb',
+    'k8s': 'kubernetes',
+    'kubernetes': 'kubernetes',
+    'docker': 'docker',
+    'aws': 'aws',
+    'amazon web services': 'aws',
+    'gcp': 'google cloud',
+    'google cloud': 'google cloud',
+    'azure': 'azure',
+    'microsoft azure': 'azure',
+    'ml': 'machine learning',
+    'machine learning': 'machine learning',
+    'dl': 'deep learning',
+    'deep learning': 'deep learning',
+    'nlp': 'nlp',
+    'natural language processing': 'nlp',
+    'ai': 'artificial intelligence',
+    'artificial intelligence': 'artificial intelligence',
+    'django': 'django',
+    'flask': 'flask',
+    'fastapi': 'fastapi',
+    'golang': 'go',
+    'go': 'go',
+    'c++': 'c++',
+    'cpp': 'c++',
+    'c#': 'c#',
+    'csharp': 'c#',
+    'ui/ux': 'ui/ux',
+    'ui': 'ui/ux',
+    'ux': 'ui/ux',
+    'figma': 'figma',
+    'html': 'html',
+    'html5': 'html',
+    'css': 'css',
+    'css3': 'css',
+    'tailwind': 'tailwind css',
+    'tailwindcss': 'tailwind css',
+    'redux': 'redux',
+    'next': 'next.js',
+    'next.js': 'next.js',
+    'nextjs': 'next.js',
+}
+
+def normalize_skill(name):
+    if not name:
+        return ''
+    cleaned = re.sub(r'[^\w\s+#.-]', '', name.strip().lower())
+    return SKILL_SYNONYMS.get(cleaned, cleaned)
+
 def calculate_recommendation_match(user_profile, job_details, user_history=None):
     """
     Multidimensional candidate-to-job recommendation & matching engine:
@@ -115,12 +188,15 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
     user_skills_list = [s.strip().lower() for s in user_skills_raw.split(',') if s.strip()]
     user_ext_list = [s.strip().lower() for s in user_ext_raw.split(',') if s.strip()]
     all_user_skills = set(user_skills_list + user_ext_list)
+    normalized_user_skills = {normalize_skill(s) for s in all_user_skills}
     has_skills = bool(all_user_skills)
 
     user_exp_raw = (user_profile.get('experience') or '')
     user_edu_raw = f"{user_profile.get('education') or ''} {user_profile.get('degree') or ''}"
     user_projects = (user_profile.get('projects') or '')
     user_text = f"{user_skills_raw} {user_ext_raw} {user_exp_raw} {user_edu_raw} {user_projects}".lower()
+    user_tokens = set(re.findall(r'[a-zA-Z0-9+#.-]+', user_text))
+    normalized_user_tokens = {normalize_skill(t) for t in user_tokens}
 
     # Check if profile is incomplete
     is_profile_empty = not has_skills and not user_exp_raw.strip() and not user_profile.get('resume') and not user_edu_raw.strip()
@@ -134,12 +210,13 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
     for s in raw_job_skills:
         s_clean = s.strip()
         s_lower = s_clean.lower()
+        s_norm = normalize_skill(s_lower)
         if not s_clean:
             continue
-        if s_lower in all_user_skills:
+        if s_lower in all_user_skills or s_norm in normalized_user_skills:
             skills_breakdown.append({"skill": s_clean, "status": "strong match", "icon": "✓"})
             matching_skills.append(s_clean)
-        elif s_lower in user_text:
+        elif s_lower in user_text or s_norm in normalized_user_tokens:
             skills_breakdown.append({"skill": s_clean, "status": "good match", "icon": "✓"})
             matching_skills.append(s_clean)
         else:

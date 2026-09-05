@@ -37,6 +37,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
@@ -44,7 +45,6 @@ function App() {
         
         {/* Main Application with Sidebar Layout */}
         <Route element={<LayoutWrapper />}>
-          <Route path="/" element={<JobDiscovery />} />
           <Route path="/discover" element={<JobDiscovery />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/jobseeker" element={<JobSeekerDashboard />} />
