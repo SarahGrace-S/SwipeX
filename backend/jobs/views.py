@@ -890,57 +890,68 @@ class RecommendationView(generics.ListAPIView):
         if user.role != 'JOB_SEEKER':
             return Job.objects.none()
 
-        swiped_job_ids = SwipeHistory.objects.filter(user=user).values_list('job_id', flat=True)
         applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
-        
-        exclude_ids = set(swiped_job_ids).union(set(applied_job_ids))
-        query = Job.objects.filter(is_active=True).exclude(id__in=exclude_ids)
+        query = Job.objects.filter(is_active=True).exclude(id__in=applied_job_ids)
         return query.distinct()
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         user = self.request.user
-        
-        applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
-        
-        # Pre-calculate swipe profile
-        saved_applied_jobs = Job.objects.filter(id__in=applied_job_ids).union(
-            Job.objects.filter(id__in=SwipeHistory.objects.filter(user=user, action='SAVED').values_list('job_id', flat=True))
-        )
-        
-        favored_skills = set()
-        favored_job_types = set()
-        for j in saved_applied_jobs:
-            favored_job_types.add(j.job_type)
-            for s in j.skills.split(','):
-                if s.strip():
-                    favored_skills.add(s.strip().lower())
-                    
-        # Skipped / Disliked profile
-        skipped_job_ids = SwipeHistory.objects.filter(user=user, action='SKIPPED').values_list('job_id', flat=True)
-        skipped_jobs = Job.objects.filter(id__in=skipped_job_ids)
-        disliked_skills = set()
-        disliked_job_types = set()
-        for j in skipped_jobs:
-            disliked_job_types.add(j.job_type)
-            for s in j.skills.split(','):
-                if s.strip():
-                    disliked_skills.add(s.strip().lower())
-                    
+        if not user.is_authenticated or user.role != 'JOB_SEEKER':
+            return Response([])
+
+        applied_job_ids = set(JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True))
+        saved_job_ids = set(SwipeHistory.objects.filter(user=user, action='SAVED').values_list('job_id', flat=True))
+        skipped_job_ids = set(SwipeHistory.objects.filter(user=user, action='SKIPPED').values_list('job_id', flat=True))
+
+        saved_applied_jobs = Job.objects.filter(id__in=applied_job_ids.union(saved_job_ids))
+        favored_job_titles = list(saved_applied_jobs.values_list('title', flat=True))
+
         context = self.get_serializer_context()
-        context['favored_skills'] = favored_skills
-        context['favored_job_types'] = favored_job_types
-        context['disliked_skills'] = disliked_skills
-        context['disliked_job_types'] = disliked_job_types
-        
+        context['favored_job_titles'] = favored_job_titles
+
         serializer = self.get_serializer(queryset, many=True, context=context)
-        
-        # Sort by match_score descending
         data = serializer.data
-        data.sort(key=lambda x: x.get('match_score', 0), reverse=True)
-        
-        # Return top 20 matches
-        return Response(data[:20])
+
+        # Check if profile is incomplete
+        has_skills = bool((user.skills or '').strip() or (user.extracted_skills or '').strip())
+        has_profile_data = has_skills or bool((user.experience or '').strip() or user.resume or (user.education or '').strip())
+
+        if not has_profile_data:
+            # User profile is incomplete: return base list with profile_incomplete indicator
+            return Response(data[:20])
+
+        # Separate jobs into strong/relevant vs poor matches:
+        # A job is considered genuinely relevant if ATS > 0 and recommendation score >= 35,
+        # OR if general role has recommendation score >= 50.
+        # Irrelevant jobs have 0% ATS match with required skills or severe skill mismatch.
+        strong_jobs = [
+            j for j in data 
+            if ((j.get('ats_score') or 0) > 0 and (j.get('match_score') or 0) >= 35)
+            or (not j.get('missing_skills') and (j.get('match_score') or 0) >= 50)
+        ]
+
+        if len(strong_jobs) >= 3:
+            # When genuinely relevant jobs are available, exclude obviously irrelevant jobs completely
+            filtered_data = strong_jobs
+        elif len(strong_jobs) > 0:
+            # If very few strong jobs, put strong jobs first, followed by lower quality matches
+            weak_jobs = [j for j in data if j not in strong_jobs and (j.get('match_score') or 0) >= 20]
+            filtered_data = strong_jobs + weak_jobs
+        else:
+            # If no strong matches available in the database, show closest available matches
+            filtered_data = data
+
+        def sort_key(j):
+            score = j.get('match_score') or 0
+            ats = j.get('ats_score') or 0
+            jid = j.get('id')
+            boost = 2 if jid in saved_job_ids else (-2 if jid in skipped_job_ids else 0)
+            return (score + boost, ats, score)
+
+        filtered_data.sort(key=sort_key, reverse=True)
+
+        return Response(filtered_data[:20])
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

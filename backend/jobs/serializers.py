@@ -22,133 +22,89 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = ('posted_by',)
 
     def _get_skill_comparison(self, obj):
+        if hasattr(obj, '_cached_match_analysis'):
+            analysis = obj._cached_match_analysis
+            return (
+                analysis['ats_score'],
+                analysis['match_score'],
+                analysis['matching_skills'],
+                analysis['missing_skills'],
+                analysis['recommendation_reason'],
+                analysis['profile_incomplete']
+            )
+
         request = self.context.get('request')
         is_authenticated_seeker = bool(request and request.user.is_authenticated and request.user.role == 'JOB_SEEKER')
-        job_skills = [s.strip() for s in obj.skills.split(',') if s.strip()]
+
+        from .ai_service import calculate_recommendation_match
 
         if is_authenticated_seeker:
             user = request.user
-            # Check if profile is incomplete
-            if not user.skills and not user.resume and not user.experience and not user.education:
-                return 0, 0, [], [], "Complete your profile or upload your resume to receive personalized recommendations.", True
-            user_text = f"{user.skills} {user.extracted_skills} {user.experience} {user.education}".lower()
+            user_profile = {
+                'skills': user.skills,
+                'extracted_skills': user.extracted_skills,
+                'experience': user.experience,
+                'years_of_experience': user.years_of_experience,
+                'education': user.education,
+                'degree': user.degree,
+                'preferred_location': user.preferred_location,
+                'preferred_job_type': user.preferred_job_type,
+                'projects': user.projects,
+                'resume': bool(user.resume),
+            }
+
+            # Optional history for role alignment
+            job_titles = self.context.get('favored_job_titles')
+            if job_titles is None:
+                from .models import SwipeHistory, JobApplication
+                applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
+                saved_job_ids = SwipeHistory.objects.filter(user=user, action='SAVED').values_list('job_id', flat=True)
+                job_titles = list(Job.objects.filter(id__in=set(applied_job_ids).union(set(saved_job_ids))).values_list('title', flat=True))
+            user_history = {'job_titles': job_titles}
         else:
             # Baseline candidate skills for unauthenticated guest visitors
-            user_text = "python javascript react typescript node sql postgresql git docker rest apis problem solving communication cloud"
+            user_profile = {
+                'skills': 'python, javascript, react, typescript, node, sql, postgresql, git, docker, rest apis',
+                'extracted_skills': 'problem solving, communication, cloud',
+                'experience': '2+ years software engineering experience',
+                'years_of_experience': '2',
+                'education': 'Bachelor of Science in Computer Science',
+                'degree': 'B.S. Computer Science',
+                'preferred_location': obj.location,
+                'preferred_job_type': obj.job_type,
+                'resume': True,
+            }
+            user_history = None
 
-        if not job_skills:
-            return 85, 88, [], [], "This role requires general problem solving and analytical thinking.", False
+        job_details = {
+            'title': obj.title,
+            'company': obj.company,
+            'location': obj.location,
+            'skills': obj.skills,
+            'description': obj.description,
+            'experience': obj.experience,
+            'job_type': obj.job_type,
+        }
 
-        matching_original = []
-        missing_original = []
-        
-        for js in job_skills:
-            if js.lower() in user_text:
-                matching_original.append(js)
-            else:
-                missing_original.append(js)
+        analysis = calculate_recommendation_match(user_profile, job_details, user_history)
+        obj._cached_match_analysis = analysis
 
-        # Base ATS Score calculation based on skills matching
-        total_skills = len(job_skills)
-        if is_authenticated_seeker:
-            score = int((len(matching_original) / total_skills) * 100) if total_skills > 0 else 100
-        else:
-            if not matching_original and total_skills > 0:
-                matching_original = [job_skills[0]]
-                missing_original = job_skills[1:]
-            score = max(68, min(92, int((len(matching_original) / total_skills) * 100) if total_skills > 0 else 80))
-            compatibility_score = min(96, max(75, score + 6))
-            reason = f"Strong alignment with role requirements ({len(matching_original)} of {total_skills} core skills match)."
-            return score, compatibility_score, matching_original, missing_original, reason, False
-        
-        # Compatibility Score adjustments from swipe behaviour
-        favored_skills = self.context.get('favored_skills')
-        if favored_skills is None:
-            from .models import SwipeHistory, JobApplication
-            applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
-            saved_job_ids = SwipeHistory.objects.filter(user=user, action='SAVED').values_list('job_id', flat=True)
-            saved_applied_jobs = Job.objects.filter(id__in=set(applied_job_ids).union(set(saved_job_ids)))
-            
-            favored_skills = set()
-            favored_job_types = set()
-            for j in saved_applied_jobs:
-                favored_job_types.add(j.job_type)
-                for s in j.skills.split(','):
-                    if s.strip():
-                        favored_skills.add(s.strip().lower())
-                for word in j.title.split():
-                    if len(word) > 3:
-                        favored_skills.add(word.lower())
-
-            skipped_job_ids = SwipeHistory.objects.filter(user=user, action='SKIPPED').values_list('job_id', flat=True)
-            skipped_jobs = Job.objects.filter(id__in=skipped_job_ids)
-            disliked_skills = set()
-            disliked_job_types = set()
-            for j in skipped_jobs:
-                disliked_job_types.add(j.job_type)
-                for s in j.skills.split(','):
-                    if s.strip():
-                        disliked_skills.add(s.strip().lower())
-                for word in j.title.split():
-                    if len(word) > 3:
-                        disliked_skills.add(word.lower())
-        else:
-            favored_job_types = self.context.get('favored_job_types', set())
-            disliked_skills = self.context.get('disliked_skills', set())
-            disliked_job_types = self.context.get('disliked_job_types', set())
-        
-        bonus = 0
-        if obj.job_type in favored_job_types:
-            bonus += 10
-            
-        for js in job_skills:
-            if js.lower() in favored_skills:
-                bonus += 5
-                
-        # Title words match bonus
-        for word in obj.title.split():
-            wl = word.lower()
-            if wl in favored_skills:
-                bonus += 10
-                
-        penalty = 0
-        if obj.job_type in disliked_job_types:
-            penalty += 15
-            
-        for js in job_skills:
-            if js.lower() in disliked_skills:
-                penalty += 5
-                
-        # Title words match penalty
-        for word in obj.title.split():
-            wl = word.lower()
-            if wl in disliked_skills:
-                penalty += 15
-                
-        # Cap the compatibility score between 0 and 100
-        compatibility_score = max(0, min(100, score + bonus - penalty))
-        
-        reason = f"Recommended because your profile matches {len(matching_original)} of the required skills."
-        if bonus > 0:
-            reason += " Based on your swipe history, this role aligns with your preferences."
-        if penalty > 0:
-            reason += " (Note: Adjusted based on skipped job types)."
-            
-        if compatibility_score == 0:
-            reason = "This job is trending in your area."
-        
-        return score, compatibility_score, matching_original, missing_original, reason, False
+        return (
+            analysis['ats_score'],
+            analysis['match_score'],
+            analysis['matching_skills'],
+            analysis['missing_skills'],
+            analysis['recommendation_reason'],
+            analysis['profile_incomplete']
+        )
 
     def get_ats_score(self, obj):
         ats, _, _, _, _, _ = self._get_skill_comparison(obj)
         return ats
 
     def get_match_score(self, obj):
-        insights = self.get_ai_match_insights(obj)
-        if insights and insights.get('match_score', 0) >= 60:
-            return insights['match_score']
         _, comp, _, _, _, _ = self._get_skill_comparison(obj)
-        return comp if comp else 82
+        return comp
 
     def get_matching_skills(self, obj):
         _, _, matching, _, _, _ = self._get_skill_comparison(obj)
@@ -157,11 +113,11 @@ class JobSerializer(serializers.ModelSerializer):
     def get_missing_skills(self, obj):
         _, _, _, missing, _, _ = self._get_skill_comparison(obj)
         return missing
-        
+
     def get_recommendation_reason(self, obj):
         _, _, _, _, reason, _ = self._get_skill_comparison(obj)
         return reason
-        
+
     def get_profile_incomplete(self, obj):
         _, _, _, _, _, incomplete = self._get_skill_comparison(obj)
         return incomplete
@@ -188,41 +144,16 @@ class JobSerializer(serializers.ModelSerializer):
         return int(avg) if avg is not None else 0
 
     def get_ai_match_insights(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user.role == 'JOB_SEEKER':
-            user = request.user
-            user_profile = {
-                'skills': user.skills,
-                'extracted_skills': user.extracted_skills,
-                'experience': user.experience,
-                'education': user.education,
-                'degree': user.degree,
-                'preferred_location': user.preferred_location,
-                'preferred_job_type': user.preferred_job_type
+        self._get_skill_comparison(obj)
+        analysis = getattr(obj, '_cached_match_analysis', None)
+        if analysis:
+            return {
+                'match_score': analysis['match_score'],
+                'ats_score': analysis['ats_score'],
+                'skills_breakdown': analysis['skills_breakdown'],
+                'why_explanation': analysis['why_explanation']
             }
-        else:
-            # Guest / Demo profile for unauthenticated visitors
-            user_profile = {
-                'skills': 'Python, JavaScript, React, SQL, Git, REST APIs, System Design',
-                'extracted_skills': 'Problem Solving, Agile, Cloud, Communication',
-                'experience': '2+ years engineering experience',
-                'education': 'Bachelor of Science in Computer Science',
-                'degree': 'B.S. Computer Science',
-                'preferred_location': obj.location,
-                'preferred_job_type': obj.job_type
-            }
-        job_details = {
-            'title': obj.title,
-            'company': obj.company,
-            'location': obj.location,
-            'skills': obj.skills,
-            'description': obj.description,
-            'experience': obj.experience,
-            'job_type': obj.job_type
-        }
-        
-        from .ai_service import get_fallback_analysis
-        return get_fallback_analysis(user_profile, job_details)
+        return None
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):

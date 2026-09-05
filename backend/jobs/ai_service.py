@@ -2,6 +2,7 @@ import os
 import urllib.request
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -94,86 +95,242 @@ def get_ai_analysis(user_profile, job_details):
         logger.error(f"Gemini API call failed: {e}. Falling back to rules-based analysis.")
         return get_fallback_analysis(user_profile, job_details)
 
+def calculate_recommendation_match(user_profile, job_details, user_history=None):
+    """
+    Multidimensional candidate-to-job recommendation & matching engine:
+    - Skills / ATS match: 40% weight
+    - Role/title relevance: 25% weight
+    - Experience compatibility: 15% weight
+    - Location preference: 10% weight
+    - Job type/work-format preference: 10% weight
+
+    Guarantees:
+    - Skills & ATS relevance has the highest priority.
+    - Location or work preferences cannot override a severe skill mismatch.
+    - Jobs with 0% skill match cannot receive an artificially inflated score.
+    - All reasons and explanations are derived strictly from actual profile and job data.
+    """
+    user_skills_raw = (user_profile.get('skills') or '')
+    user_ext_raw = (user_profile.get('extracted_skills') or '')
+    user_skills_list = [s.strip().lower() for s in user_skills_raw.split(',') if s.strip()]
+    user_ext_list = [s.strip().lower() for s in user_ext_raw.split(',') if s.strip()]
+    all_user_skills = set(user_skills_list + user_ext_list)
+    has_skills = bool(all_user_skills)
+
+    user_exp_raw = (user_profile.get('experience') or '')
+    user_edu_raw = f"{user_profile.get('education') or ''} {user_profile.get('degree') or ''}"
+    user_projects = (user_profile.get('projects') or '')
+    user_text = f"{user_skills_raw} {user_ext_raw} {user_exp_raw} {user_edu_raw} {user_projects}".lower()
+
+    # Check if profile is incomplete
+    is_profile_empty = not has_skills and not user_exp_raw.strip() and not user_profile.get('resume') and not user_edu_raw.strip()
+
+    # 1. Skills / ATS Match (40% weight)
+    raw_job_skills = [s.strip() for s in (job_details.get('skills') or '').split(',') if s.strip()]
+    skills_breakdown = []
+    matching_skills = []
+    missing_skills = []
+
+    for s in raw_job_skills:
+        s_clean = s.strip()
+        s_lower = s_clean.lower()
+        if not s_clean:
+            continue
+        if s_lower in all_user_skills:
+            skills_breakdown.append({"skill": s_clean, "status": "strong match", "icon": "✓"})
+            matching_skills.append(s_clean)
+        elif s_lower in user_text:
+            skills_breakdown.append({"skill": s_clean, "status": "good match", "icon": "✓"})
+            matching_skills.append(s_clean)
+        else:
+            skills_breakdown.append({"skill": s_clean, "status": "skill gap", "icon": "⚠"})
+            missing_skills.append(s_clean)
+
+    total_skills = len(raw_job_skills)
+    if is_profile_empty:
+        ats_score = 0
+        skills_weight_score = 0.0
+    elif total_skills == 0:
+        ats_score = 65 if has_skills else 40
+        skills_weight_score = (ats_score / 100.0) * 40.0
+    else:
+        ats_score = int(round((len(matching_skills) / total_skills) * 100))
+        skills_weight_score = (ats_score / 100.0) * 40.0
+
+    # 2. Role / Title Relevance (25% weight)
+    stopwords = {'and', 'or', 'the', 'for', 'at', 'in', 'of', 'to', 'a', 'an', 'senior', 'junior', 'lead', 'intern', 'fresher', 'associate', 'staff', 'principal', 'company', 'test'}
+    title_words = [w.lower() for w in re.findall(r'[A-Za-z0-9+#]+', job_details.get('title') or '') if len(w) > 1 and w.lower() not in stopwords]
+
+    role_pct = 0.0
+    if is_profile_empty:
+        role_pct = 0.0
+    else:
+        for tw in title_words:
+            if tw in all_user_skills or tw in user_text:
+                role_pct += 40.0
+            elif tw in ['software', 'engineer', 'developer', 'programmer', 'fullstack', 'full', 'stack'] and any(k in all_user_skills for k in ['python', 'java', 'react', 'c++', 'javascript', 'django', 'spring', 'node', 'sql', 'git']):
+                role_pct += 35.0
+            elif tw in ['backend'] and any(k in all_user_skills for k in ['python', 'java', 'sql', 'django', 'spring', 'postgres', 'mysql', 'node', 'go']):
+                role_pct += 40.0
+            elif tw in ['frontend'] and any(k in all_user_skills for k in ['react', 'javascript', 'typescript', 'html', 'css', 'vue', 'angular']):
+                role_pct += 40.0
+            elif tw in ['data', 'analyst', 'scientist'] and any(k in all_user_skills for k in ['python', 'sql', 'pandas', 'excel', 'ml', 'machine learning']):
+                role_pct += 40.0
+            elif tw in ['cloud', 'devops'] and any(k in all_user_skills for k in ['aws', 'docker', 'kubernetes', 'linux', 'cloud', 'ci/cd']):
+                role_pct += 40.0
+            elif tw in ['ui', 'ux', 'designer'] and any(k in all_user_skills for k in ['figma', 'adobe', 'ui', 'ux', 'design', 'prototyping']):
+                role_pct += 40.0
+
+        if user_history:
+            for ht in user_history.get('job_titles', []):
+                if any(w in ht.lower() for w in title_words):
+                    role_pct += 20.0
+
+        role_pct = min(100.0, role_pct)
+    role_weight_score = (role_pct / 100.0) * 25.0
+
+    # 3. Experience Match (15% weight)
+    cand_exp_text = f"{user_profile.get('years_of_experience') or ''} {user_exp_raw}"
+    cand_years_match = re.search(r'(\d+)', cand_exp_text)
+    cand_years = float(cand_years_match.group(1)) if cand_years_match else 0.0
+
+    job_exp_str = (job_details.get('experience') or '').lower()
+    exp_range = re.findall(r'(\d+)', job_exp_str)
+    if not exp_range or 'any' in job_exp_str or job_exp_str.strip() in ['0', '0 years', '']:
+        exp_pct = 100.0
+    elif len(exp_range) >= 2:
+        min_exp, max_exp = float(exp_range[0]), float(exp_range[1])
+        if min_exp <= cand_years <= (max_exp + 1.5):
+            exp_pct = 100.0
+        elif cand_years >= (min_exp - 1.0):
+            exp_pct = 75.0
+        elif cand_years >= (min_exp - 2.0):
+            exp_pct = 40.0
+        else:
+            exp_pct = 0.0
+    else:
+        req_exp = float(exp_range[0])
+        if abs(cand_years - req_exp) <= 1.0:
+            exp_pct = 100.0
+        elif cand_years >= (req_exp - 2.0):
+            exp_pct = 60.0
+        else:
+            exp_pct = 10.0
+
+    if is_profile_empty:
+        exp_pct = 0.0
+    exp_weight_score = (exp_pct / 100.0) * 15.0
+
+    # 4. Location Preference (10% weight)
+    user_loc = (user_profile.get('preferred_location') or '').strip().lower()
+    job_loc = (job_details.get('location') or '').strip().lower()
+    if not user_loc:
+        loc_pct = 60.0
+    elif user_loc in job_loc or job_loc in user_loc:
+        loc_pct = 100.0
+    elif 'remote' in job_loc:
+        loc_pct = 90.0
+    else:
+        loc_pct = 10.0
+    loc_weight_score = (loc_pct / 100.0) * 10.0
+
+    # 5. Job Type Preference (10% weight)
+    user_type = (user_profile.get('preferred_job_type') or '').strip().upper()
+    job_type = (job_details.get('job_type') or '').strip().upper()
+    if not user_type:
+        type_pct = 60.0
+    elif user_type == job_type:
+        type_pct = 100.0
+    else:
+        type_pct = 20.0
+    type_weight_score = (type_pct / 100.0) * 10.0
+
+    # Total Score Calculation
+    total_raw = skills_weight_score + role_weight_score + exp_weight_score + loc_weight_score + type_weight_score
+
+    # SEVERE SKILL MISMATCH GATING:
+    # If candidate has technical skills, but 0% match this job's requirements:
+    if has_skills and total_skills > 0 and ats_score == 0:
+        total_raw = min(total_raw, 25.0)
+    elif has_skills and total_skills > 0 and ats_score < 30:
+        total_raw = min(total_raw, 45.0)
+    elif is_profile_empty:
+        total_raw = 0.0
+
+    rec_score = int(round(total_raw))
+    rec_score = max(0, min(99, rec_score))
+
+    # Accurate, explainable reasons
+    why_explanation = []
+    if is_profile_empty:
+        reason = "Complete your profile or upload your resume to receive personalized recommendations."
+        why_explanation.append("Add your skills and experience to unlock personalized AI job recommendations.")
+    elif total_skills > 0 and ats_score == 0:
+        missing_preview = ', '.join(missing_skills[:3])
+        reason = f"Lower suitability: You are missing core required skills ({missing_preview}) for this role."
+        why_explanation.append(f"Skill gap: {missing_preview} are required for this position.")
+        if loc_pct >= 90 and user_profile.get('preferred_location'):
+            why_explanation.append(f"Location aligns with your preference ({user_profile.get('preferred_location')}), but key skills are missing.")
+    elif ats_score >= 80:
+        match_preview = ', '.join(matching_skills[:3])
+        reason = f"Recommended because your {match_preview} skills closely match the required qualifications."
+        if loc_pct >= 90 and user_profile.get('preferred_location'):
+            reason += f" Position matches your preferred location ({user_profile.get('preferred_location')})."
+        why_explanation.append(f"Your experience with {match_preview} directly matches role requirements.")
+        if loc_pct >= 90 and user_profile.get('preferred_location'):
+            why_explanation.append(f"Location matches your preferred city ({user_profile.get('preferred_location')}).")
+        if exp_pct >= 90:
+            why_explanation.append(f"Your experience level aligns with the {job_details.get('experience') or 'required'} experience.")
+        if missing_skills:
+            why_explanation.append(f"Note: {', '.join(missing_skills[:2])} is a skill you could highlight or brush up on.")
+    elif matching_skills and missing_skills:
+        match_preview = ', '.join(matching_skills[:2])
+        missing_preview = ', '.join(missing_skills[:2])
+        reason = f"Recommended because your {match_preview} skills match {len(matching_skills)} of {total_skills} requirements. Missing: {missing_preview}."
+        why_explanation.append(f"Your {match_preview} background aligns with core role requirements.")
+        why_explanation.append(f"Skill gap: {missing_preview} is required for this role.")
+        if loc_pct >= 90 and user_profile.get('preferred_location'):
+            why_explanation.append(f"Job location aligns with your preference ({user_profile.get('preferred_location')}).")
+    elif matching_skills:
+        match_preview = ', '.join(matching_skills[:3])
+        reason = f"Recommended because your {match_preview} skills align with this role."
+        why_explanation.append(f"Role requirements match your {match_preview} skills.")
+    elif role_pct >= 60:
+        missing_preview = ', '.join(missing_skills[:2]) if missing_skills else 'see description'
+        reason = f"Role matches your engineering background, but requires learning: {missing_preview}."
+        why_explanation.append("Title alignment with your career focus.")
+        if missing_skills:
+            why_explanation.append(f"Requires building skills in {missing_preview}.")
+    else:
+        missing_preview = ', '.join(missing_skills[:2]) if missing_skills else 'see description'
+        reason = f"Partial match based on role and format; required skills ({missing_preview}) differ from your profile."
+        why_explanation.append("Job matches general work format preference.")
+
+    return {
+        "match_score": rec_score,
+        "ats_score": ats_score,
+        "recommendation_score": rec_score,
+        "compatibility_score": rec_score,
+        "skills_breakdown": skills_breakdown,
+        "matching_skills": matching_skills,
+        "missing_skills": missing_skills,
+        "why_explanation": why_explanation,
+        "recommendation_reason": reason,
+        "profile_incomplete": is_profile_empty,
+    }
+
 def get_fallback_analysis(user_profile, job_details):
     """
-    A smart, rules-based fallback engine that calculates the match score,
-    skill breakdown, and matches reasons using string matching.
+    A smart, rules-based engine that calculates the match score,
+    skill breakdown, and matches reasons using multi-factor profile analysis.
     """
-    user_skills = [s.strip().lower() for s in (user_profile.get('skills') or '').split(',') if s.strip()]
-    user_ext_skills = [s.strip().lower() for s in (user_profile.get('extracted_skills') or '').split(',') if s.strip()]
-    all_user_skills = set(user_skills + user_ext_skills)
-    
-    job_skills = [s.strip() for s in (job_details.get('skills') or '').split(',') if s.strip()]
-    
-    # Also look at user's experience/education for text matching
-    user_text = f"{user_profile.get('skills') or ''} {user_profile.get('extracted_skills') or ''} {user_profile.get('experience') or ''} {user_profile.get('education') or ''}".lower()
-    
-    skills_breakdown = []
-    matched_count = 0
-    
-    for skill in job_skills:
-        skill_lower = skill.lower()
-        if skill_lower in all_user_skills:
-            skills_breakdown.append({"skill": skill, "status": "strong match", "icon": "✓"})
-            matched_count += 1
-        elif skill_lower in user_text:
-            skills_breakdown.append({"skill": skill, "status": "good match", "icon": "✓"})
-            matched_count += 1
-        else:
-            skills_breakdown.append({"skill": skill, "status": "skill gap", "icon": "⚠"})
-            
-    total_skills = len(job_skills)
-    base_score = int((matched_count / total_skills) * 80) if total_skills > 0 else 75
-    
-    # Additional checks
-    # Location
-    location_match = False
-    if user_profile.get('preferred_location') and job_details.get('location'):
-        u_loc = user_profile.get('preferred_location').lower()
-        j_loc = job_details.get('location').lower()
-        if u_loc in j_loc or j_loc in u_loc:
-            base_score += 10
-            location_match = True
-            
-    # Job Type
-    job_type_match = False
-    if user_profile.get('preferred_job_type') and job_details.get('job_type'):
-        if user_profile.get('preferred_job_type').upper() == job_details.get('job_type').upper():
-            base_score += 10
-            job_type_match = True
-            
-    match_score = min(99, max(20, base_score))
-    
-    # Generate custom explanations based on actual matched/missing items
-    why_explanation = []
-    
-    # Check if we have strong match skills
-    strong_matches = [item['skill'] for item in skills_breakdown if item['status'] == 'strong match']
-    good_matches = [item['skill'] for item in skills_breakdown if item['status'] == 'good match']
-    gaps = [item['skill'] for item in skills_breakdown if item['status'] == 'skill gap']
-    
-    if strong_matches:
-        why_explanation.append(f"Your experience in {', '.join(strong_matches[:2])} directly matches the role requirements.")
-    elif good_matches:
-        why_explanation.append(f"Your background includes familiarity with {', '.join(good_matches[:2])}.")
-        
-    if location_match:
-        why_explanation.append(f"The job location ({job_details.get('location')}) aligns with your preferred location ({user_profile.get('preferred_location')}).")
-    else:
-        why_explanation.append(f"This role offers an opportunity in {job_details.get('location')}.")
-        
-    if job_type_match:
-        why_explanation.append(f"The job type aligns with your preferred work format.")
-        
-    if gaps:
-        why_explanation.append(f"{', '.join(gaps[:2])} appears to be a skill area you can focus on improving.")
-    else:
-        why_explanation.append("Your skills highly align with the job description.")
-        
+    analysis = calculate_recommendation_match(user_profile, job_details)
     return {
-        "match_score": match_score,
-        "skills_breakdown": skills_breakdown,
-        "why_explanation": why_explanation
+        "match_score": analysis["match_score"],
+        "ats_score": analysis["ats_score"],
+        "skills_breakdown": analysis["skills_breakdown"],
+        "why_explanation": analysis["why_explanation"],
+        "recommendation_reason": analysis["recommendation_reason"],
     }
 
 def get_resume_analysis(resume_text, user_profile):

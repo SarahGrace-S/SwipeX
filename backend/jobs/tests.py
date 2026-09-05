@@ -197,3 +197,46 @@ class JobAIFeaturesTests(APITestCase):
         self.assertEqual(res_saved.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(res_saved.data), 1)
 
+    def test_recommendation_endpoint_prioritization(self):
+        # Create an irrelevant job with 0% ATS match (UI/UX Designer)
+        irrelevant_job = Job.objects.create(
+            title='UI/UX Designer',
+            company='DesignCo',
+            location='Bangalore',
+            skills='Figma, Adobe XD, Sketch',
+            description='UI/UX designer needed for mobile interfaces.',
+            job_type='FULL_TIME',
+            posted_by=self.recruiter
+        )
+
+        self.client.force_authenticate(user=self.seeker)
+        url = reverse('recommendations')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
+
+        # The relevant job (Full Stack Developer) should rank before or exclude the irrelevant job
+        top_job = response.data[0]
+        self.assertEqual(top_job['id'], self.job.id)
+        self.assertGreater(top_job['ats_score'], 0)
+        self.assertGreater(top_job['match_score'], 50)
+        self.assertIn('Python', top_job['matching_skills'])
+        self.assertNotIn('trending in your area', top_job['recommendation_reason'].lower())
+
+    def test_incomplete_profile_recommendations(self):
+        incomplete_user = User.objects.create_user(
+            email='incomplete@example.com',
+            full_name='Incomplete User',
+            password='password123',
+            role='JOB_SEEKER'
+        )
+        self.client.force_authenticate(user=incomplete_user)
+        url = reverse('recommendations')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        if len(response.data) > 0:
+            first = response.data[0]
+            self.assertTrue(first.get('profile_incomplete', False))
+            self.assertEqual(first.get('ats_score', 0), 0)
+
+
