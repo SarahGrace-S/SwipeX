@@ -47,7 +47,7 @@ export default function Login() {
       if (userRole === 'RECRUITER') {
         navigate('/recruiter');
       } else {
-        navigate('/jobseeker');
+        navigate('/discover');
       }
     } catch (err) {
       console.error(err);

@@ -107,6 +107,27 @@ class JobViewSet(viewsets.ModelViewSet):
         for seeker in job_seekers:
             create_job_notifications(job, seeker)
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        ordering = request.query_params.get('ordering')
+        if ordering in ['latest', 'highest_salary', 'lowest_salary']:
+            return response
+
+        # Deterministic ranking for Discover Jobs:
+        # 1. AI Compatibility Score (match_score) DESC
+        # 2. ATS Match Score (ats_score) DESC
+        # 3. Stable tie breaker: ID DESC
+        if isinstance(response.data, list):
+            response.data.sort(
+                key=lambda j: (
+                    j.get('match_score') if j.get('match_score') is not None else 0,
+                    j.get('ats_score') if j.get('ats_score') is not None else 0,
+                    j.get('id') or 0
+                ),
+                reverse=True
+            )
+        return response
+
     def get_queryset(self):
         user = self.request.user
         queryset = Job.objects.all()
@@ -183,9 +204,6 @@ class SwipeActionView(generics.CreateAPIView):
         job_id = request.data.get('job_id')
         action_type = request.data.get('action')
 
-        if action_type not in ['SAVED', 'APPLIED', 'SKIPPED']:
-            return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             job = Job.objects.get(id=job_id)
         except Job.DoesNotExist:
@@ -203,6 +221,18 @@ class SwipeActionView(generics.CreateAPIView):
                     'skills': 'Python, React, JavaScript, SQL, Git'
                 }
             )
+
+        if action_type in ['UNSAVE', 'UNSAVED']:
+            SwipeHistory.objects.filter(user=user, job=job, action='SAVED').delete()
+            return Response({'message': 'Job unsaved successfully.'}, status=status.HTTP_200_OK)
+
+        if action_type not in ['SAVED', 'APPLIED', 'SKIPPED']:
+            return Response({'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action_type == 'SKIPPED':
+            SwipeHistory.objects.filter(user=user, job=job, action='SAVED').delete()
+        elif action_type == 'SAVED':
+            SwipeHistory.objects.filter(user=user, job=job, action='SKIPPED').delete()
 
         swipe, created = SwipeHistory.objects.update_or_create(
             user=user,
@@ -264,6 +294,11 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         job = serializer.validated_data.get('job')
+        
+        # Prevent duplicate applications
+        if JobApplication.objects.filter(applicant=user, job=job).exists():
+            raise serializers.ValidationError({"detail": "You have already applied for this job."})
+
         resume_file = serializer.validated_data.get('resume')
         
         # If no new resume uploaded, try using user profile's resume

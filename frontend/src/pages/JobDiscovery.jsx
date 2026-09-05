@@ -20,7 +20,19 @@ export default function JobDiscovery() {
   const fetchJobs = async () => {
     try {
       const res = await api.get('/api/jobs/');
-      setJobs(res.data);
+      const rawJobs = Array.isArray(res.data) ? res.data : [];
+      const sortedJobs = [...rawJobs].sort((a, b) => {
+        const compA = a.match_score != null ? a.match_score : 0;
+        const compB = b.match_score != null ? b.match_score : 0;
+        if (compB !== compA) return compB - compA;
+
+        const atsA = a.ats_score != null ? a.ats_score : 0;
+        const atsB = b.ats_score != null ? b.ats_score : 0;
+        if (atsB !== atsA) return atsB - atsA;
+
+        return (b.id || 0) - (a.id || 0);
+      });
+      setJobs(sortedJobs);
     } catch (err) {
       console.error('Failed to fetch jobs:', err);
     } finally {

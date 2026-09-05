@@ -24,7 +24,7 @@ export default function SavedJobs() {
 
   const handleUnsave = async (jobId) => {
     try {
-      await api.post('/api/swipe/', { job_id: jobId, action: 'SKIPPED' });
+      await api.post('/api/swipe/', { job_id: jobId, action: 'UNSAVE' });
       setSavedJobs(prev => prev.filter(entry => entry.job.id !== jobId));
     } catch (err) {
       console.error('Failed to unsave job:', err);
