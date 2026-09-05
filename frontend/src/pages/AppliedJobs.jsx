@@ -9,10 +9,8 @@ export default function AppliedJobs() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) { navigate('/login'); return; }
     fetchAppliedJobs();
-  }, [navigate]);
+  }, []);
 
   const fetchAppliedJobs = async () => {
     try {

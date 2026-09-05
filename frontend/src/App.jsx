@@ -37,12 +37,15 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/landing" element={<Home />} />
         
-        {/* Authenticated Routes with Sidebar Layout */}
+        {/* Main Application with Sidebar Layout */}
         <Route element={<LayoutWrapper />}>
+          <Route path="/" element={<JobDiscovery />} />
+          <Route path="/discover" element={<JobDiscovery />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/jobseeker" element={<JobSeekerDashboard />} />
           <Route path="/recruiter" element={<RecruiterDashboard />} />
@@ -52,7 +55,6 @@ function App() {
           <Route path="/recruiter/applicants" element={<ViewApplicants />} />
           <Route path="/recruiter/company-profile" element={<CompanyProfile />} />
           <Route path="/recruiter/analytics" element={<Analytics />} />
-          <Route path="/discover" element={<JobDiscovery />} />
           <Route path="/saved-jobs" element={<SavedJobs />} />
           <Route path="/applied-jobs" element={<AppliedJobs />} />
           <Route path="/companies" element={<Companies />} />

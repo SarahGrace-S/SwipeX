@@ -32,19 +32,23 @@ export default function ApplicationForm() {
         const jobRes = await api.get(`/api/jobs/${jobId}/`);
         setJob(jobRes.data);
 
-        const profileRes = await api.get('/api/profile/');
-        setProfile(profileRes.data);
-        setFormData({
-          full_name: profileRes.data.full_name || '',
-          email: profileRes.data.email || '',
-          phone: profileRes.data.phone || '',
-          address: profileRes.data.preferred_location || '',
-          qualification: profileRes.data.degree || profileRes.data.education || '',
-          experience: profileRes.data.experience || '',
-          linkedin: profileRes.data.linkedin || '',
-          portfolio: profileRes.data.portfolio || '',
-          cover_letter: '',
-        });
+        try {
+          const profileRes = await api.get('/api/profile/');
+          setProfile(profileRes.data);
+          setFormData({
+            full_name: profileRes.data.full_name || '',
+            email: profileRes.data.email || '',
+            phone: profileRes.data.phone || '',
+            address: profileRes.data.preferred_location || '',
+            qualification: profileRes.data.degree || profileRes.data.education || '',
+            experience: profileRes.data.experience || '',
+            linkedin: profileRes.data.linkedin || '',
+            portfolio: profileRes.data.portfolio || '',
+            cover_letter: '',
+          });
+        } catch (profileErr) {
+          // Guest mode - manual entry allowed
+        }
       } catch (err) {
         setError('Failed to load application details.');
       } finally {

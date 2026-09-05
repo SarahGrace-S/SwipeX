@@ -21,10 +21,8 @@ export default function Search() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) { navigate('/login'); return; }
     handleSearch();
-  }, [navigate]);
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);

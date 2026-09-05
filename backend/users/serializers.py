@@ -11,6 +11,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ('full_name', 'email', 'password', 'confirm_password', 'role')
 
+    def validate_email(self, value):
+        return value.strip().lower()
+
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError({"password": "Password fields must match."})

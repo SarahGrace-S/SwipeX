@@ -181,7 +181,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
 class SwipeActionView(generics.CreateAPIView):
     serializer_class = SwipeHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         job_id = request.data.get('job_id')
@@ -195,8 +195,21 @@ class SwipeActionView(generics.CreateAPIView):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        if request.user.is_authenticated:
+            user = request.user
+        else:
+            from users.models import User
+            user, _ = User.objects.get_or_create(
+                email='guest@swipex.app',
+                defaults={
+                    'full_name': 'Guest Seeker',
+                    'role': 'JOB_SEEKER',
+                    'skills': 'Python, React, JavaScript, SQL, Git'
+                }
+            )
+
         swipe, created = SwipeHistory.objects.update_or_create(
-            user=request.user,
+            user=user,
             job=job,
             action=action_type,
             defaults={}
@@ -208,26 +221,38 @@ class SwipeActionView(generics.CreateAPIView):
 
 class SavedJobsView(generics.ListAPIView):
     serializer_class = SwipeHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return SwipeHistory.objects.filter(user=self.request.user, action='SAVED')
+        if self.request.user.is_authenticated:
+            return SwipeHistory.objects.filter(user=self.request.user, action='SAVED')
+        from users.models import User
+        guest = User.objects.filter(email='guest@swipex.app').first()
+        return SwipeHistory.objects.filter(user=guest, action='SAVED') if guest else SwipeHistory.objects.none()
 
 
 class AppliedJobsView(generics.ListAPIView):
     serializer_class = SwipeHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return SwipeHistory.objects.filter(user=self.request.user, action='APPLIED')
+        if self.request.user.is_authenticated:
+            return SwipeHistory.objects.filter(user=self.request.user, action='APPLIED')
+        from users.models import User
+        guest = User.objects.filter(email='guest@swipex.app').first()
+        return SwipeHistory.objects.filter(user=guest, action='APPLIED') if guest else SwipeHistory.objects.none()
 
 
 class SkippedJobsView(generics.ListAPIView):
     serializer_class = SwipeHistorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return SwipeHistory.objects.filter(user=self.request.user, action='SKIPPED')
+        if self.request.user.is_authenticated:
+            return SwipeHistory.objects.filter(user=self.request.user, action='SKIPPED')
+        from users.models import User
+        guest = User.objects.filter(email='guest@swipex.app').first()
+        return SwipeHistory.objects.filter(user=guest, action='SKIPPED') if guest else SwipeHistory.objects.none()
 
 
 class JobApplicationViewSet(viewsets.ModelViewSet):

@@ -42,9 +42,14 @@ export default function Sidebar({ isOpen, onClose }) {
     navigate('/');
   };
 
-  if (!user) return null;
+  const isRecruiter = user?.role === 'RECRUITER';
 
-  const isRecruiter = user.role === 'RECRUITER';
+  const guestLinks = [
+    { name: 'Discover Jobs', path: '/', icon: '⚡' },
+    { name: 'Search Jobs', path: '/search', icon: '🔍' },
+    { name: 'Saved Jobs', path: '/saved-jobs', icon: '★' },
+    { name: 'Applied Jobs', path: '/applied-jobs', icon: '✓' },
+  ];
 
   const seekerLinks = [
     { name: 'Dashboard', path: '/jobseeker', icon: '📊' },
@@ -68,20 +73,21 @@ export default function Sidebar({ isOpen, onClose }) {
     { name: 'Notifications', path: '/notifications', icon: '🔔' },
   ];
 
-  const links = isRecruiter ? recruiterLinks : seekerLinks;
+  const links = !user ? guestLinks : isRecruiter ? recruiterLinks : seekerLinks;
   const themeColor = isRecruiter ? 'indigo' : 'purple';
 
   return (
-    <div className={`w-64 border-r border-white/5 bg-slate-950 md:bg-black/20 flex flex-col h-screen fixed md:sticky top-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="p-6 flex items-center justify-between border-b border-white/5">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr from-${themeColor}-500 to-${themeColor}-400 flex items-center justify-center font-bold text-lg shadow-lg text-white`}>
+    <div className={`w-64 border-r border-white/5 bg-slate-950/90 md:bg-black/30 backdrop-blur-xl flex flex-col h-screen fixed md:sticky top-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar Header */}
+      <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
+        <Link to="/" className="flex items-center space-x-2.5">
+          <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr from-${themeColor}-500 to-${themeColor}-400 flex items-center justify-center font-bold text-base shadow-md text-white`}>
             SX
           </div>
-          <span className={`font-extrabold text-2xl tracking-wider bg-gradient-to-r from-${themeColor}-400 to-${themeColor}-300 bg-clip-text text-transparent`}>
+          <span className={`font-extrabold text-xl tracking-wider bg-gradient-to-r from-${themeColor}-400 to-${themeColor}-300 bg-clip-text text-transparent`}>
             SwipeX
           </span>
-        </div>
+        </Link>
         <button 
           onClick={onClose}
           className="md:hidden w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white border border-white/10"
@@ -90,24 +96,25 @@ export default function Sidebar({ isOpen, onClose }) {
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+      {/* Navigation List */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2.5 space-y-1">
         {links.map((link) => {
           const isActive = location.pathname === link.path;
           return (
             <Link
               key={link.path}
               to={link.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+              className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl transition-all text-xs font-semibold ${
                 isActive
-                  ? `bg-${themeColor}-500/20 border border-${themeColor}-500/30 text-${themeColor}-300 font-bold`
-                  : `text-gray-400 hover:bg-white/5 hover:text-white border border-transparent`
+                  ? `bg-${themeColor}-500/20 border border-${themeColor}-500/30 text-${themeColor}-200 font-bold shadow-sm`
+                  : `text-gray-400 hover:bg-white/5 hover:text-gray-200 border border-transparent`
               }`}
             >
-              <span className="text-lg">{link.icon}</span>
-              <span className="text-sm flex-1 flex justify-between items-center">
-                <span>{link.name}</span>
+              <span className="text-base">{link.icon}</span>
+              <span className="flex-1 flex justify-between items-center truncate">
+                <span className="truncate">{link.name}</span>
                 {link.name === 'Notifications' && unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full ml-1">
                     {unreadCount}
                   </span>
                 )}
@@ -117,23 +124,46 @@ export default function Sidebar({ isOpen, onClose }) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/5">
-        <div className="flex items-center space-x-3 mb-4 px-2">
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white uppercase">
-            {user.full_name?.charAt(0) || 'U'}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-bold text-white truncate">{user.full_name}</p>
-            <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
-        >
-          <span className="text-lg">🚪</span>
-          <span className="text-sm font-bold">Logout</span>
-        </button>
+      {/* Sidebar Footer */}
+      <div className="p-3.5 border-t border-white/5 bg-black/20">
+        {user ? (
+          <>
+            <div className="flex items-center space-x-2.5 mb-2.5 px-1">
+              <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center text-xs font-bold uppercase shrink-0">
+                {user.full_name?.charAt(0) || 'U'}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-white truncate leading-tight">{user.full_name}</p>
+                <p className="text-[10px] text-gray-400 truncate leading-tight">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 text-xs font-semibold cursor-pointer"
+            >
+              <span>🚪</span>
+              <span>Sign Out</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center space-x-2.5 mb-2.5 px-1">
+              <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center text-xs font-bold shrink-0">
+                G
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-white truncate leading-tight">Guest Explorer</p>
+                <p className="text-[10px] text-gray-400 truncate leading-tight">SwipeX Demo</p>
+              </div>
+            </div>
+            <Link
+              to="/login"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 border border-purple-500/30 text-purple-200 text-xs font-semibold transition-all shadow-sm"
+            >
+              <span>Sign In / Register</span>
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

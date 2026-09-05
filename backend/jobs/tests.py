@@ -175,3 +175,25 @@ class JobAIFeaturesTests(APITestCase):
         self.client.force_authenticate(user=self.recruiter)
         recruiter_response = self.client.get(url)
         self.assertEqual(recruiter_response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_guest_discovery_and_swiping(self):
+        # 1. Unauthenticated GET /api/jobs/
+        res_jobs = self.client.get('/api/jobs/')
+        self.assertEqual(res_jobs.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(res_jobs.data), 0)
+        first_job = res_jobs.data[0]
+        self.assertIsNotNone(first_job.get('ats_score'))
+        self.assertIsNotNone(first_job.get('match_score'))
+        self.assertIsNotNone(first_job.get('ai_match_insights'))
+        self.assertFalse(first_job.get('profile_incomplete', False))
+
+        # 2. Unauthenticated POST /api/swipe/ (guest swipe)
+        url = reverse('swipe-action')
+        res_swipe = self.client.post(url, {'job_id': self.job.id, 'action': 'SAVED'}, format='json')
+        self.assertIn(res_swipe.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED])
+
+        # 3. Unauthenticated GET /api/saved-jobs/
+        res_saved = self.client.get(reverse('saved-jobs'))
+        self.assertEqual(res_saved.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(res_saved.data), 1)
+

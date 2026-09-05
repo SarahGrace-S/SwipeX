@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -10,146 +10,139 @@ export default function Register() {
     confirmPassword: '',
     role: 'JOB_SEEKER',
   });
-  const [error, setError] = useState('');
+
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadGoogleScript = () => {
-      if (window.google) {
-        initializeGoogle();
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        initializeGoogle();
-      };
-      document.body.appendChild(script);
-    };
-
-    const initializeGoogle = () => {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      if (!clientId) {
-        console.warn("VITE_GOOGLE_CLIENT_ID is missing.");
-        return;
-      }
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCallback,
-        });
-        window.google.accounts.id.renderButton(
-          document.getElementById("googleSignInDiv"),
-          { theme: "outline", size: "large", width: "100%" }
-        );
-      } catch (err) {
-        console.error("Google initialize failed:", err);
-      }
-    };
-
-    loadGoogleScript();
-  }, [formData.role]); // Reinitialize if role changes to make sure correct role is sent
-
-  const handleGoogleCallback = async (response) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.post('/api/google-auth/', {
-        credential: response.credential,
-        role: formData.role
-      });
-      localStorage.setItem('access_token', res.data.access);
-      localStorage.setItem('refresh_token', res.data.refresh);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      
-      if (res.data.user.role === 'RECRUITER') {
-        navigate('/recruiter');
-      } else {
-        navigate('/jobseeker');
-      }
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.error || 'Google Authentication failed.');
-    } finally {
-      setLoading(false);
+  // Email format validation: standard RFC 5322 regex
+  const validateEmailFormat = (val) => {
+    if (!val || !val.trim()) return 'Email address is required.';
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(val.trim())) {
+      return 'Please enter a valid email address (e.g. name@example.com).';
     }
+    return '';
+  };
+
+  const validateField = (name, value) => {
+    let err = '';
+    if (name === 'fullName') {
+      if (!value.trim()) err = 'Full name is required.';
+      else if (value.trim().length < 2) err = 'Name must be at least 2 characters.';
+    } else if (name === 'email') {
+      err = validateEmailFormat(value);
+    } else if (name === 'password') {
+      if (!value) err = 'Password is required.';
+      else if (value.length < 6) err = 'Password must be at least 6 characters.';
+    } else if (name === 'confirmPassword') {
+      if (!value) err = 'Please confirm your password.';
+      else if (value !== formData.password) err = 'Passwords do not match.';
+    }
+    return err;
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error on type
-    if (error) setError('');
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // If the field was already touched and had an error, revalidate to clear error when corrected
+    if (touched[name]) {
+      const err = validateField(name, value);
+      setFieldErrors((prev) => ({ ...prev, [name]: err }));
+    }
+
+    if (serverError) setServerError('');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const err = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: err }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { fullName, email, password, confirmPassword, role } = formData;
 
-    // Simple client-side validation
-    if (!fullName || !email || !password || !confirmPassword) {
-      setError('All fields are required.');
-      return;
-    }
+    // Mark all as touched on submit
+    const allTouched = {
+      fullName: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    };
+    setTouched(allTouched);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    // Validate all fields
+    const errors = {
+      fullName: validateField('fullName', formData.fullName),
+      email: validateField('email', formData.email),
+      password: validateField('password', formData.password),
+      confirmPassword: validateField('confirmPassword', formData.confirmPassword),
+    };
+
+    setFieldErrors(errors);
+
+    // Abort if any client-side validation error exists
+    if (Object.values(errors).some(Boolean)) {
       return;
     }
 
     setLoading(true);
-    setError('');
+    setServerError('');
+    setSuccess('');
 
     try {
-      const response = await api.post('/api/register/', {
-        full_name: fullName,
-        email: email,
-        password: password,
-        confirm_password: confirmPassword,
-        role: role,
+      await api.post('/api/register/', {
+        full_name: formData.fullName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        role: formData.role,
       });
 
-      setSuccess('Registration successful! Redirecting to login...');
+      setSuccess('Account created successfully! Redirecting to sign in...');
       setFormData({ fullName: '', email: '', password: '', confirmPassword: '', role: 'JOB_SEEKER' });
-      
-      // Redirect after 2 seconds
+      setFieldErrors({});
+      setTouched({});
+
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1800);
     } catch (err) {
       console.error(err);
       if (err.response && err.response.data) {
-        // Handle DRF validation errors
         const data = err.response.data;
         if (data.email) {
-          setError(Array.isArray(data.email) ? data.email[0] : data.email);
+          const emailErr = Array.isArray(data.email) ? data.email[0] : data.email;
+          setFieldErrors((prev) => ({ ...prev, email: emailErr }));
+          setTouched((prev) => ({ ...prev, email: true }));
         } else if (data.password) {
-          setError(Array.isArray(data.password) ? data.password[0] : data.password);
+          const pwErr = Array.isArray(data.password) ? data.password[0] : data.password;
+          setFieldErrors((prev) => ({ ...prev, password: pwErr }));
+          setTouched((prev) => ({ ...prev, password: true }));
         } else if (data.full_name) {
-          setError(Array.isArray(data.full_name) ? data.full_name[0] : data.full_name);
-        } else if (data.role) {
-          setError(Array.isArray(data.role) ? data.role[0] : data.role);
+          const fnErr = Array.isArray(data.full_name) ? data.full_name[0] : data.full_name;
+          setFieldErrors((prev) => ({ ...prev, fullName: fnErr }));
         } else if (data.detail) {
-          setError(data.detail);
-        } else if (data.non_field_errors) {
-          setError(data.non_field_errors[0]);
+          setServerError(data.detail);
+        } else if (data.error) {
+          setServerError(data.error);
         } else {
           const keys = Object.keys(data);
           if (keys.length > 0) {
-            const firstError = data[keys[0]];
-            setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
+            const firstErr = data[keys[0]];
+            setServerError(Array.isArray(firstErr) ? firstErr[0] : String(firstErr));
           } else {
-            setError('Failed to register. Please check your inputs.');
+            setServerError('Registration failed. Please check your inputs.');
           }
         }
       } else {
-        setError('Connection error. Please make sure the backend server is running.');
+        setServerError('Connection error. Please ensure the backend server is reachable.');
       }
     } finally {
       setLoading(false);
@@ -157,10 +150,10 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen gradient-bg text-white flex items-center justify-center p-6">
+    <div className="min-h-screen gradient-bg text-white flex flex-col justify-center items-center py-8 px-4 sm:px-6">
       <div className="w-full max-w-md">
         {/* Brand */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <Link to="/" className="inline-flex items-center space-x-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
               SX
@@ -169,29 +162,30 @@ export default function Register() {
               SwipeX
             </span>
           </Link>
-          <h2 className="text-3xl font-extrabold mt-4 tracking-tight">Create your account</h2>
-          <p className="text-gray-400 text-sm mt-2">Discover tailored job matches in minutes</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold mt-3 tracking-tight">Create your account</h2>
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">Discover tailored career opportunities in seconds</p>
         </div>
 
         {/* Card */}
-        <div className="glass-card rounded-2xl p-8 shadow-2xl">
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center space-x-2">
+        <div className="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10">
+          {serverError && (
+            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-center space-x-2">
               <span>⚠️</span>
-              <span>{error}</span>
+              <span>{serverError}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center space-x-2">
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center space-x-2">
               <span>✅</span>
               <span>{success}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label htmlFor="fullName" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Full Name
               </label>
               <input
@@ -200,14 +194,21 @@ export default function Register() {
                 type="text"
                 value={formData.fullName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Jane Doe"
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm"
+                className={`w-full px-4 py-2.5 rounded-xl glass-input text-sm ${
+                  touched.fullName && fieldErrors.fullName ? 'border-red-500/60 focus:border-red-400' : ''
+                }`}
                 required
               />
+              {touched.fullName && fieldErrors.fullName && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.fullName}</p>
+              )}
             </div>
 
+            {/* Email Address */}
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Email Address
               </label>
               <input
@@ -216,14 +217,21 @@ export default function Register() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="jane@example.com"
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm"
+                className={`w-full px-4 py-2.5 rounded-xl glass-input text-sm ${
+                  touched.email && fieldErrors.email ? 'border-red-500/60 focus:border-red-400' : ''
+                }`}
                 required
               />
+              {touched.email && fieldErrors.email && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.email}</p>
+              )}
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Password
               </label>
               <input
@@ -232,14 +240,21 @@ export default function Register() {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm"
+                className={`w-full px-4 py-2.5 rounded-xl glass-input text-sm ${
+                  touched.password && fieldErrors.password ? 'border-red-500/60 focus:border-red-400' : ''
+                }`}
                 required
               />
+              {touched.password && fieldErrors.password && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.password}</p>
+              )}
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Confirm Password
               </label>
               <input
@@ -248,14 +263,21 @@ export default function Register() {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm"
+                className={`w-full px-4 py-2.5 rounded-xl glass-input text-sm ${
+                  touched.confirmPassword && fieldErrors.confirmPassword ? 'border-red-500/60 focus:border-red-400' : ''
+                }`}
                 required
               />
+              {touched.confirmPassword && fieldErrors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.confirmPassword}</p>
+              )}
             </div>
 
+            {/* Role Dropdown */}
             <div>
-              <label htmlFor="role" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label htmlFor="role" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Register As
               </label>
               <select
@@ -263,39 +285,25 @@ export default function Register() {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm appearance-none cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-xl glass-input text-sm appearance-none cursor-pointer bg-slate-900/80"
                 required
               >
-                <option value="JOB_SEEKER">Job Seeker</option>
-                <option value="RECRUITER">Recruiter</option>
+                <option value="JOB_SEEKER">Job Seeker (Browse & Apply)</option>
+                <option value="RECRUITER">Recruiter (Post & Manage Jobs)</option>
               </select>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all duration-300 font-bold text-sm tracking-wide shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0 mt-2"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all duration-300 font-bold text-sm tracking-wide shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0 mt-3 cursor-pointer"
             >
               {loading ? 'Creating Account...' : 'Sign Up'}
             </button>
           </form>
 
-          <div className="relative my-5 flex items-center justify-center">
-            <div className="absolute inset-0 border-t border-white/5"></div>
-            <span className="relative px-3 bg-slate-900 text-xs text-gray-500 font-bold uppercase tracking-widest">or</span>
-          </div>
-
-          {!import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-            <button
-              onClick={() => alert("Google Client ID is missing. Please add VITE_GOOGLE_CLIENT_ID to your environment variables.")}
-              className="w-full py-3.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all font-bold text-sm tracking-wide flex items-center justify-center gap-2"
-            >
-              <span className="text-base">🌐</span> Continue with Google (Mock)
-            </button>
-          ) : (
-            <div id="googleSignInDiv" className="w-full flex justify-center"></div>
-          )}
-
+          {/* Footer Navigation */}
           <div className="mt-6 text-center text-sm text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors duration-200">
