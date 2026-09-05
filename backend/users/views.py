@@ -37,6 +37,10 @@ class UserRegistrationView(generics.CreateAPIView):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        username = attrs.get(self.username_field)
+        if username and isinstance(username, str):
+            attrs[self.username_field] = username.strip().lower()
+
         data = super().validate(attrs)
         data['user'] = {
             'id': self.user.id,

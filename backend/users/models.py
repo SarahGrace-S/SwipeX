@@ -5,8 +5,9 @@ class UserManager(BaseUserManager):
     def create_user(self, email, full_name, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
+        email = email.strip().lower()
         extra_fields.setdefault('role', 'JOB_SEEKER')
+        extra_fields.setdefault('is_active', True)
         user = self.model(email=email, full_name=full_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -23,6 +24,11 @@ class UserManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
 
         return self.create_user(email, full_name, password, **extra_fields)
+
+    def get_by_natural_key(self, username):
+        if username and isinstance(username, str):
+            return self.get(email__iexact=username.strip())
+        return self.get(**{self.model.USERNAME_FIELD: username})
 
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (

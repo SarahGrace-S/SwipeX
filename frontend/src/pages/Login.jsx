@@ -33,7 +33,7 @@ export default function Login() {
 
     try {
       const response = await api.post('/api/login/', {
-        email: email,
+        email: email.trim().toLowerCase(),
         password: password,
       });
 
