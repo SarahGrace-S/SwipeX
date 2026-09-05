@@ -54,7 +54,7 @@ export default function CareerAssistant() {
 
   const handleQuickQuestion = (question) => {
     setInput(question);
-    // Submit in next tick
+    
     setTimeout(() => {
       document.getElementById('chatForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     }, 50);
@@ -69,7 +69,7 @@ export default function CareerAssistant() {
 
   return (
     <div className="min-h-screen text-white flex flex-col p-6 max-w-4xl mx-auto h-[calc(100vh-65px)] md:h-screen relative">
-      {/* Header */}
+      
       <div className="mb-4 flex-shrink-0">
         <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
           <span>🤖</span> SwipeX AI Career Assistant
@@ -77,9 +77,9 @@ export default function CareerAssistant() {
         <p className="text-gray-400 text-xs mt-1">Personalized career guidance powered by SwipeX intelligence.</p>
       </div>
 
-      {/* Chat Window */}
+      
       <div className="flex-1 glass-card rounded-3xl border border-white/10 flex flex-col overflow-hidden mb-4 min-h-[300px]">
-        {/* Messages Body */}
+        
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((m, idx) => (
             <div 
@@ -111,7 +111,7 @@ export default function CareerAssistant() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Suggestion Chips */}
+        
         {messages.length === 1 && !loading && (
           <div className="p-4 border-t border-white/5 flex flex-wrap gap-2 justify-center flex-shrink-0">
             {quickQuestions.map((q, i) => (
@@ -126,7 +126,7 @@ export default function CareerAssistant() {
           </div>
         )}
 
-        {/* Input Bar */}
+        
         <form 
           id="chatForm"
           onSubmit={handleSend}

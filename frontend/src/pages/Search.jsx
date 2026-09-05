@@ -70,7 +70,7 @@ export default function Search() {
     <div className="flex flex-col h-full w-full">
 
       <main className="max-w-6xl mx-auto w-full px-6 py-8 flex-grow grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
+        
         <div className="md:col-span-1 space-y-6">
           <div className="glass-card rounded-2xl p-6 border border-purple-500/10 space-y-4">
             <h2 className="text-lg font-bold text-white mb-2">Filters</h2>
@@ -209,7 +209,7 @@ export default function Search() {
           </div>
         </div>
 
-        {/* Results Pane */}
+        
         <div className="md:col-span-3 space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-bold">Search Results ({jobs.length})</h2>
@@ -242,7 +242,7 @@ export default function Search() {
                     <span>🎯 {job.experience || 'Any'}</span>
                   </div>
 
-                  {/* ATS & Compatibility Details */}
+                  
                   {!job.profile_incomplete ? (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-4 text-xs space-y-2 text-left">
                       <div className="flex justify-between items-center border-b border-white/5 pb-2">

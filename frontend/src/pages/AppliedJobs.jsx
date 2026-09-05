@@ -53,7 +53,7 @@ export default function AppliedJobs() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-4 w-full flex items-center justify-between border-b border-white/5">
         <Link to="/jobseeker" className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">SX</div>
@@ -72,7 +72,7 @@ export default function AppliedJobs() {
         </h1>
         <p className="text-gray-400 text-sm mb-8">Jobs you have applied for and their status tracking</p>
 
-        {/* Filter Tabs */}
+        
         {appliedJobs.length > 0 && (
           <div className="flex border-b border-white/5 mb-6 gap-6 overflow-x-auto pb-1 text-xs">
             {[
@@ -150,7 +150,7 @@ export default function AppliedJobs() {
                   <span>🎯 {entry.job_details?.experience || 'Any'}</span>
                 </div>
 
-                {/* ATS and Compatibility Details */}
+                
                 <div className="grid grid-cols-2 gap-4 bg-white/5 border border-white/10 rounded-xl p-3 mt-4">
                   <div className="text-center border-r border-white/5">
                     <span className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider">ATS Score</span>

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export default function Home() {
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col justify-between">
-      {/* Header / Navbar */}
+      
       <header className="max-w-7xl mx-auto px-6 py-6 w-full flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-purple-500/20">
@@ -30,7 +30,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Hero Section */}
+      
       <main className="max-w-6xl mx-auto px-6 py-16 flex-grow flex flex-col items-center justify-center text-center">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-none mb-6">
           Swipe Your Way to <br />
@@ -56,7 +56,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Feature Preview Cards */}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-24">
           <div className="glass-card p-8 rounded-2xl text-left hover:border-purple-500/30 transition-all duration-300 group">
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -90,7 +90,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Footer */}
+      
       <footer className="border-t border-white/5 py-8 text-center text-xs text-gray-500">
         <p>&copy; {new Date().getFullYear()} SwipeX Inc. All rights reserved. Designed for intelligent job search.</p>
       </footer>

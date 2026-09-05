@@ -77,7 +77,7 @@ export default function JobDiscovery() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-3.5 w-full flex items-center justify-between border-b border-white/5">
         <Link to="/" className="flex items-center space-x-2">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-base shadow-lg">
@@ -99,7 +99,7 @@ export default function JobDiscovery() {
         </nav>
       </header>
 
-      {/* Content */}
+      
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-3 md:py-5 w-full">
         <div className="text-center mb-3">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
@@ -108,7 +108,7 @@ export default function JobDiscovery() {
           <p className="text-gray-400 text-xs md:text-sm mt-0.5">Swipe right to save or apply, swipe left to pass</p>
         </div>
 
-        {/* Feedback Toast */}
+        
         {feedback && (
           <div className="mb-3 px-5 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-200 text-xs font-semibold animate-pulse">
             {feedback}
@@ -139,7 +139,6 @@ export default function JobDiscovery() {
           </div>
         )}
 
-        {/* Counter */}
         {currentJob && (
           <p className="mt-3 text-gray-500 text-xs font-semibold">
             {currentIndex + 1} of {jobs.length} jobs

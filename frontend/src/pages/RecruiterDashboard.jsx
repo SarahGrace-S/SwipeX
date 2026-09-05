@@ -67,7 +67,7 @@ export default function RecruiterDashboard() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-6 w-full flex items-center justify-between border-b border-white/5">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -85,7 +85,7 @@ export default function RecruiterDashboard() {
         </button>
       </header>
 
-      {/* Content */}
+      
       <main className="flex-grow flex items-center justify-center px-6 py-12">
         <div className="glass-card rounded-3xl p-8 md:p-12 w-full max-w-6xl shadow-2xl border border-indigo-500/10 space-y-8">
           <div className="text-center">
@@ -95,7 +95,7 @@ export default function RecruiterDashboard() {
             <h2 className="text-xl font-semibold text-indigo-300">Recruiter Control Center</h2>
           </div>
 
-          {/* Widgets Grid */}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jobs Posted</span>
@@ -167,7 +167,7 @@ export default function RecruiterDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Quick Actions */}
+            
             <div className="lg:col-span-1 space-y-4">
               <h3 className="text-lg font-bold text-indigo-300 mb-2 text-left">Quick Navigation</h3>
               <div className="grid grid-cols-1 gap-4 text-left">
@@ -202,7 +202,7 @@ export default function RecruiterDashboard() {
               </div>
             </div>
 
-            {/* Recent Applicants */}
+            
             <div className="lg:col-span-1 space-y-4 text-left">
               <h3 className="text-lg font-bold text-indigo-300 mb-2">Recent Applicants</h3>
               {recentApplicants.length === 0 ? (
@@ -226,7 +226,7 @@ export default function RecruiterDashboard() {
               )}
             </div>
 
-            {/* Recent Jobs */}
+            
             <div className="lg:col-span-1 space-y-4 text-left">
               <h3 className="text-lg font-bold text-indigo-300 mb-2">Recent Jobs</h3>
               {recentJobs.length === 0 ? (

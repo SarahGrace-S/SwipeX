@@ -30,7 +30,7 @@ export default function ATSFeedback() {
     return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
   }
 
-  // Determine ATS performance category
+  
   let atsCategory = "Needs Improvement";
   let atsColor = "text-red-400";
   let atsBg = "bg-red-500/10 border-red-500/30";
@@ -65,7 +65,7 @@ export default function ATSFeedback() {
               <p className={`mt-2 font-bold text-lg ${atsColor}`}>{atsCategory}</p>
             </div>
             
-            {/* Circular Progress (CSS based) */}
+            
             <div className="relative w-32 h-32 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-black/30" />

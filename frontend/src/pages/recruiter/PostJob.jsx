@@ -101,7 +101,7 @@ export default function PostJob() {
   return (
     <div className="min-h-screen gradient-bg text-white py-12 px-4">
       <div className="max-w-3xl mx-auto glass-card p-8 rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden">
-        {/* Glows */}
+        
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10">

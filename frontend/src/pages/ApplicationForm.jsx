@@ -47,7 +47,7 @@ export default function ApplicationForm() {
             cover_letter: '',
           });
         } catch (profileErr) {
-          // Guest mode - manual entry allowed
+          
         }
       } catch (err) {
         setError('Failed to load application details.');
@@ -82,14 +82,14 @@ export default function ApplicationForm() {
 
     try {
       if (step === 1) {
-        // Step 1: Analyze ATS
+        
         const res = await api.post('/api/applications/analyze/', data, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         setAtsData(res.data);
         setStep(2);
       } else {
-        // Step 2: Final Submit
+        
         await api.post('/api/applications/', data, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
@@ -130,7 +130,7 @@ export default function ApplicationForm() {
   return (
     <div className="min-h-screen gradient-bg text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto glass-card p-8 rounded-3xl border border-purple-500/20 shadow-2xl relative overflow-hidden">
-        {/* Glows */}
+        
         <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -157,7 +157,7 @@ export default function ApplicationForm() {
 
           {step === 1 ? (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Profile Details Summary */}
+              
               <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-3">
                 <h3 className="text-sm font-bold text-purple-300 uppercase tracking-wider border-b border-white/10 pb-1.5">👤 Preloaded Profile Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -172,7 +172,7 @@ export default function ApplicationForm() {
                 </div>
               </div>
 
-              {/* Resume Handling */}
+              
               <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-4">
                 <h3 className="text-sm font-bold text-purple-300 uppercase tracking-wider border-b border-white/10 pb-1.5">📄 Resume Attachment</h3>
                 {profile?.resume ? (
@@ -204,7 +204,7 @@ export default function ApplicationForm() {
                 </div>
               </div>
 
-              {/* Optional Cover Letter */}
+              
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Cover Letter (Optional)</label>
                 <textarea name="cover_letter" value={formData.cover_letter} onChange={handleChange} rows="4" placeholder="Add any details or introduction for the recruiter..." className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"></textarea>
@@ -221,7 +221,7 @@ export default function ApplicationForm() {
               <div className="bg-black/30 border border-indigo-500/30 rounded-2xl p-6 space-y-6">
                 <h3 className="text-xl font-bold text-indigo-300 mb-2 border-b border-white/10 pb-2">ATS Analysis & Suitability Report</h3>
                 
-                {/* 2. ATS Score & Rating */}
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center">
                     <span className="block text-xs font-bold text-gray-400 uppercase mb-1">ATS Score</span>
@@ -232,7 +232,7 @@ export default function ApplicationForm() {
                       Status: {atsData?.ats_score_rating}
                     </span>
                   </div>
-                  {/* 5. Compatibility Score */}
+                  
                   <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center">
                     <span className="block text-xs font-bold text-gray-400 uppercase mb-1">Compatibility</span>
                     <span className="text-3xl font-black text-indigo-400">
@@ -244,7 +244,7 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 1. Resume Analysis */}
+                
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
                   <h4 className="text-sm font-bold text-indigo-300 uppercase tracking-wider">📄 Resume Analysis Snapshot</h4>
                   <div className="text-xs space-y-2 text-gray-300">
@@ -270,7 +270,7 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 3. Keyword Match */}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl">
                     <h4 className="text-xs font-bold text-emerald-400 uppercase mb-2">Matched Keywords</h4>
@@ -290,7 +290,7 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 4. Missing Skills & Learn Recommendation */}
+                
                 {atsData?.missing_skills?.length > 0 && (
                   <div className="bg-amber-500/5 border border-amber-500/20 p-4 rounded-xl">
                     <h4 className="text-xs font-bold text-amber-400 uppercase mb-2">Missing Required Skills</h4>
@@ -303,14 +303,14 @@ export default function ApplicationForm() {
                   </div>
                 )}
 
-                {/* 10. Recommendation Reason & Swipe Recommendation */}
+                
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-2">
                   <h4 className="text-xs font-bold text-indigo-300 uppercase">💡 Match Rationale</h4>
                   <p className="text-xs text-gray-300"><span className="font-semibold text-white">Why Recommended:</span> {atsData?.recommendation_reason}</p>
                   <p className="text-xs text-gray-300"><span className="font-semibold text-white">Swipe Behavior Alignment:</span> {atsData?.swipe_recommendation}</p>
                 </div>
 
-                {/* 7. Smart Suggestions */}
+                
                 <div className="bg-indigo-500/5 border border-indigo-500/20 p-4 rounded-xl space-y-3">
                   <h4 className="text-xs font-bold text-indigo-400 uppercase">🎯 Smart Career Suggestions</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -335,7 +335,7 @@ export default function ApplicationForm() {
                   </div>
                 </div>
 
-                {/* 8. ATS Feedback (If ATS Score < 80) */}
+                
                 {atsData?.ats_score < 80 && (
                   <div className="bg-red-500/5 border border-red-500/20 p-4 rounded-xl space-y-2">
                     <h4 className="text-xs font-bold text-red-400 uppercase">⚠️ Resume Improvement Suggestions</h4>
@@ -357,7 +357,7 @@ export default function ApplicationForm() {
                   </div>
                 )}
 
-                {/* 6. Personalized Recommendations (Similar jobs) */}
+                
                 {atsData?.recommended_jobs?.length > 0 && (
                   <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-2">
                     <h4 className="text-xs font-bold text-indigo-300 uppercase">✨ Other Jobs You Might Like</h4>

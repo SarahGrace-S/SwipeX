@@ -162,7 +162,7 @@ export default function ResumeAnalysis() {
               )}
             </div>
 
-            {/* AI Resume Review Card */}
+            
             <div className="glass-card rounded-3xl p-6 border border-purple-500/20 bg-purple-950/5 text-left space-y-4">
               <div className="flex justify-between items-center border-b border-white/5 pb-3">
                 <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function ResumeAnalysis() {
 
               {aiAnalysis && aiAnalysis.resume_score > 0 ? (
                 <div className="space-y-4">
-                  {/* Score */}
+                  
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full border-4 border-purple-500 flex items-center justify-center font-black text-xl text-purple-300">
                       {aiAnalysis.resume_score}/100
@@ -191,7 +191,7 @@ export default function ResumeAnalysis() {
                     </div>
                   </div>
 
-                  {/* Strengths & Improvements */}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">✓ Strengths</h4>
@@ -224,7 +224,7 @@ export default function ResumeAnalysis() {
                     </div>
                   </div>
 
-                  {/* Documented Scoring Criteria */}
+                  
                   <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-[11px] text-gray-400 space-y-1 mt-3">
                     <span className="font-bold text-gray-300 block text-xs">📊 Documented Scoring Criteria:</span>
                     <p>• <strong className="text-gray-300">Content Structure & Depth (30%):</strong> Clean headings, standard sections, and comprehensive descriptions.</p>
@@ -272,7 +272,7 @@ export default function ResumeAnalysis() {
           </div>
 
           <div className="space-y-6">
-            {/* Overall ATS Score */}
+            
             <div className="glass-card rounded-3xl p-6 border border-purple-500/30 bg-purple-500/5 flex flex-col items-center justify-center text-center">
               <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider mb-2">Overall Resume ATS Score</span>
               <div className="w-28 h-28 rounded-full border-4 border-purple-500 flex flex-col items-center justify-center mb-4 shadow-[0_0_15px_rgba(168,85,247,0.5)] bg-black/40">
@@ -289,7 +289,7 @@ export default function ResumeAnalysis() {
               <p className="text-xs text-purple-200/80">Generally optimized for parser structure compatibility</p>
             </div>
 
-            {/* Keyword Optimization */}
+            
             <div className="glass-card rounded-3xl p-6 border border-emerald-500/30 bg-emerald-500/5 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 rounded-full border-4 border-emerald-500 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(16,185,129,0.5)] bg-black/40">
                 <span className="text-xl font-black text-emerald-400">

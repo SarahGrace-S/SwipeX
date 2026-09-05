@@ -20,7 +20,6 @@ def get_ai_analysis(user_profile, job_details):
         return get_fallback_analysis(user_profile, job_details)
         
     try:
-        # Construct prompt
         prompt = f"""
         You are an advanced AI recruitment assistant. Analyze the following User Profile and Job Details, then return a JSON object with:
         1. "match_score": an integer between 0 and 100 indicating how well the user fits the job based on skills, experience, and education.
@@ -62,7 +61,6 @@ def get_ai_analysis(user_profile, job_details):
         }}
         """
         
-        # Call Gemini API
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         data = {
             "contents": [
@@ -198,10 +196,8 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
     user_tokens = set(re.findall(r'[a-zA-Z0-9+#.-]+', user_text))
     normalized_user_tokens = {normalize_skill(t) for t in user_tokens}
 
-    # Check if profile is incomplete
     is_profile_empty = not has_skills and not user_exp_raw.strip() and not user_profile.get('resume') and not user_edu_raw.strip()
 
-    # 1. Skills / ATS Match (40% weight)
     raw_job_skills = [s.strip() for s in (job_details.get('skills') or '').split(',') if s.strip()]
     skills_breakdown = []
     matching_skills = []
@@ -234,7 +230,6 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
         ats_score = int(round((len(matching_skills) / total_skills) * 100))
         skills_weight_score = (ats_score / 100.0) * 40.0
 
-    # 2. Role / Title Relevance (25% weight)
     stopwords = {'and', 'or', 'the', 'for', 'at', 'in', 'of', 'to', 'a', 'an', 'senior', 'junior', 'lead', 'intern', 'fresher', 'associate', 'staff', 'principal', 'company', 'test'}
     title_words = [w.lower() for w in re.findall(r'[A-Za-z0-9+#]+', job_details.get('title') or '') if len(w) > 1 and w.lower() not in stopwords]
 
@@ -266,7 +261,6 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
         role_pct = min(100.0, role_pct)
     role_weight_score = (role_pct / 100.0) * 25.0
 
-    # 3. Experience Match (15% weight)
     cand_exp_text = f"{user_profile.get('years_of_experience') or ''} {user_exp_raw}"
     cand_years_match = re.search(r'(\d+)', cand_exp_text)
     cand_years = float(cand_years_match.group(1)) if cand_years_match else 0.0
@@ -298,7 +292,6 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
         exp_pct = 0.0
     exp_weight_score = (exp_pct / 100.0) * 15.0
 
-    # 4. Location Preference (10% weight)
     user_loc = (user_profile.get('preferred_location') or '').strip().lower()
     job_loc = (job_details.get('location') or '').strip().lower()
     if not user_loc:
@@ -311,7 +304,6 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
         loc_pct = 10.0
     loc_weight_score = (loc_pct / 100.0) * 10.0
 
-    # 5. Job Type Preference (10% weight)
     user_type = (user_profile.get('preferred_job_type') or '').strip().upper()
     job_type = (job_details.get('job_type') or '').strip().upper()
     if not user_type:
@@ -322,11 +314,8 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
         type_pct = 20.0
     type_weight_score = (type_pct / 100.0) * 10.0
 
-    # Total Score Calculation
     total_raw = skills_weight_score + role_weight_score + exp_weight_score + loc_weight_score + type_weight_score
 
-    # SEVERE SKILL MISMATCH GATING:
-    # If candidate has technical skills, but 0% match this job's requirements:
     if has_skills and total_skills > 0 and ats_score == 0:
         total_raw = min(total_raw, 25.0)
     elif has_skills and total_skills > 0 and ats_score < 30:
@@ -337,7 +326,6 @@ def calculate_recommendation_match(user_profile, job_details, user_history=None)
     rec_score = int(round(total_raw))
     rec_score = max(0, min(99, rec_score))
 
-    # Accurate, explainable reasons
     why_explanation = []
     if is_profile_empty:
         reason = "Complete your profile or upload your resume to receive personalized recommendations."
@@ -522,7 +510,6 @@ def get_fallback_resume_analysis(resume_text, user_profile):
     else:
         improvements.append("Ensure your degree, college name, and graduation year are correctly filled out.")
         
-    # Standard improvements
     improvements.append("Add measurable achievements (e.g. 'Improved efficiency by 20%').")
     improvements.append("Strengthen your professional summary with a strong hook.")
     
@@ -545,7 +532,6 @@ def get_career_assistant_response(prompt, user_profile):
         return get_fallback_career_assistant_response(prompt, user_profile)
         
     try:
-        # Construct system context
         system_instruction = f"""
         You are the SwipeX AI Career Assistant. Help the user with career advice, job recommendations, skills, and resume improvement.
         Keep your tone supportive, professional, and concise. Refer directly to the user's profile where relevant.

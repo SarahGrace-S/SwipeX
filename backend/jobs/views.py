@@ -10,7 +10,6 @@ from users.resume_parser import parse_resume
 
 
 def create_job_notifications(job, seeker):
-    # Calculate match & compatibility
     skills_str = job.skills or ''
     job_skills = [s.strip() for s in skills_str.split(',') if s.strip()]
     if not job_skills:
@@ -38,18 +37,15 @@ def create_job_notifications(job, seeker):
             compatibility_score += 10
     compatibility_score = min(100, compatibility_score)
     
-    # Check if user is relevant
     is_relevant = len(matching) > 0 or compatibility_score >= 60
     if not is_relevant:
         return
         
-    # Get actual application count from DB
     app_count = job.applications.count()
     
     matching_skills_str = ', '.join(matching) if matching else 'None'
     missing_skills_str = ', '.join(missing) if missing else 'None'
 
-    # 1. NEW JOB POSTED ALERT
     msg_new_job = f"New Job Match 🎯\n{job.title} at {job.company}\nCompatibility: {compatibility_score}%\nMatching skills: {matching_skills_str}\nThis job matches your profile."
     Notification.objects.create(
         recipient=seeker,
@@ -58,7 +54,6 @@ def create_job_notifications(job, seeker):
         related_job=job
     )
     
-    # 2. STARTUP HIRING ALERT (if startup)
     if job.company_type in ['STARTUP', 'NEW_STARTUP']:
         msg_startup = f"🚀 Startup Hiring Alert\nA startup is hiring for {job.title}.\nYour profile matches this job by {compatibility_score}%."
         Notification.objects.create(
@@ -68,7 +63,6 @@ def create_job_notifications(job, seeker):
             related_job=job
         )
         
-    # 3. LOW COMPETITION JOB ALERT
     if app_count <= 3:
         msg_low_comp = f"🔥 Low Competition Opportunity\n{job.title} at {job.company}\nOnly {app_count} applicants so far.\nYour compatibility: {compatibility_score}%."
         Notification.objects.create(
@@ -78,7 +72,6 @@ def create_job_notifications(job, seeker):
             related_job=job
         )
         
-    # 4. HIGH MATCH JOB ALERT (if compatibility >= 80%)
     if compatibility_score >= 80:
         msg_high_match = f"✨ Strong Job Match\n{job.title} at {job.company}\nCompatibility: {compatibility_score}%\nMatching skills: {matching_skills_str}\nMissing skills: {missing_skills_str}"
         Notification.objects.create(
@@ -101,7 +94,6 @@ class JobViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         job = serializer.save(posted_by=self.request.user)
         
-        # Identify relevant Job Seekers and notify them
         from users.models import User
         job_seekers = User.objects.filter(role='JOB_SEEKER')
         for seeker in job_seekers:
@@ -113,10 +105,6 @@ class JobViewSet(viewsets.ModelViewSet):
         if ordering in ['latest', 'highest_salary', 'lowest_salary']:
             return response
 
-        # Deterministic ranking for Discover Jobs:
-        # 1. AI Compatibility Score (match_score) DESC
-        # 2. ATS Match Score (ats_score) DESC
-        # 3. Stable tie breaker: ID DESC
         if isinstance(response.data, list):
             response.data.sort(
                 key=lambda j: (
@@ -191,7 +179,6 @@ class JobViewSet(viewsets.ModelViewSet):
                 queryset = queryset.order_by('-salary_max', '-salary_min')
             elif ordering == 'lowest_salary':
                 queryset = queryset.order_by('salary_min', 'salary_max')
-            # 'best_match' is typically sorted client-side based on returned score or handled via custom logic
             
         return queryset
 
@@ -295,13 +282,11 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         job = serializer.validated_data.get('job')
         
-        # Prevent duplicate applications
         if JobApplication.objects.filter(applicant=user, job=job).exists():
             raise serializers.ValidationError({"detail": "You have already applied for this job."})
 
         resume_file = serializer.validated_data.get('resume')
         
-        # If no new resume uploaded, try using user profile's resume
         if not resume_file:
             if user.resume:
                 resume_file = user.resume
@@ -310,7 +295,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
 
         resume_summary = ""
         extracted_skills = []
-        # If it's a new uploaded file, we parse it
         if resume_file and resume_file != user.resume:
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(resume_file.name)[1]) as tmp:
                 for chunk in resume_file.chunks():
@@ -323,7 +307,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             finally:
                 os.unlink(tmp_path)
         else:
-            # It is user.resume
             if user.extracted_skills:
                 extracted_skills = [s.strip() for s in user.extracted_skills.split(',') if s.strip()]
             if user.resume_summary:
@@ -340,7 +323,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
                 finally:
                     os.unlink(tmp_path)
 
-        # Compute user's text for comparison
         user_skills = serializer.validated_data.get('skills') or user.skills or ''
         user_experience = serializer.validated_data.get('experience') or user.experience or ''
         user_qualification = serializer.validated_data.get('qualification') or user.degree or user.education or ''
@@ -362,16 +344,13 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         ats_score = int((len(matching) / total) * 100) if total > 0 else 100
         compatibility_score = ats_score
         
-        # Adjust based on preferred location
         if user.preferred_location and job.location:
             if user.preferred_location.lower() in job.location.lower() or job.location.lower() in user.preferred_location.lower():
                 compatibility_score += 10
-        # Adjust based on preferred job type
         if user.preferred_job_type and job.job_type:
             if user.preferred_job_type.upper() == job.job_type.upper():
                 compatibility_score += 10
                 
-        # Adjust based on swipe history (Saved/Applied jobs)
         liked_job_ids = SwipeHistory.objects.filter(user=user, action__in=['SAVED', 'APPLIED']).values_list('job_id', flat=True)
         liked_jobs = Job.objects.filter(id__in=liked_job_ids)
         similar_liked = liked_jobs.filter(Q(job_type=job.job_type) | Q(title__icontains=job.title.split()[0])).count()
@@ -409,7 +388,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             recommendation_priority=recommendation_priority
         )
         
-        # Notify Recruiter
         if application.job.posted_by:
             Notification.objects.create(
                 recipient=application.job.posted_by,
@@ -418,7 +396,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
                 related_job=application.job,
                 related_application=application
             )
-        # Notify Job Seeker
         Notification.objects.create(
             recipient=self.request.user,
             message=f"Application submitted successfully for {application.job.title}",
@@ -428,7 +405,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        # Fetch old status from database directly
         try:
             old_status = JobApplication.objects.get(id=serializer.instance.id).status
         except JobApplication.DoesNotExist:
@@ -448,7 +424,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             missing_skills_str = ', '.join([s.strip() for s in application.missing_skills.split(',') if s.strip()]) if application.missing_skills else 'None'
             missing_keywords_str = ', '.join([s.strip() for s in application.missing_keywords.split(',') if s.strip()]) if application.missing_keywords else 'None'
 
-            # Notify Job Seeker of status change
             msg_map = {
                 'SHORTLISTED': f"🎉 Application Shortlisted\n\nYour application for {application.job.title} has been shortlisted by the recruiter.\n\nATS Score: {application.ats_score}%\nCompatibility: {application.compatibility_score}%",
                 'INTERVIEW': f"📅 Interview Scheduled\n\nYour application for {application.job.title} has been scheduled for an interview.",
@@ -482,7 +457,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
         resume_summary = ""
         extracted_skills = []
         if resume_file:
-            # Temporary save to parse
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(resume_file.name)[1]) as tmp:
                 for chunk in resume_file.chunks():
                     tmp.write(chunk)
@@ -495,7 +469,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
             finally:
                 os.unlink(tmp_path)
         else:
-            # Use stored user skills if no new resume uploaded
             if user.extracted_skills:
                 extracted_skills = [s.strip() for s in user.extracted_skills.split(',') if s.strip()]
             if user.resume_summary:
@@ -512,7 +485,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
                 finally:
                     os.unlink(tmp_path)
 
-        # Compute user's text for comparison
         user_skills = request.data.get('skills') or user.skills or ''
         user_experience = request.data.get('experience') or user.experience or ''
         user_qualification = request.data.get('qualification') or user.degree or user.education or ''
@@ -533,18 +505,15 @@ class AnalyzeApplicationView(generics.GenericAPIView):
 
         total = len(job_skills)
         ats_score = int((len(matching_skills) / total) * 100) if total > 0 else 100
-        compatibility_score = ats_score  # can be adjusted based on swipe history if needed
+        compatibility_score = ats_score
         
-        # Adjust based on preferred location
         if user.preferred_location and job.location:
             if user.preferred_location.lower() in job.location.lower() or job.location.lower() in user.preferred_location.lower():
                 compatibility_score += 10
-        # Adjust based on preferred job type
         if user.preferred_job_type and job.job_type:
             if user.preferred_job_type.upper() == job.job_type.upper():
                 compatibility_score += 10
                 
-        # Adjust based on swipe history (Saved/Applied jobs)
         liked_job_ids = SwipeHistory.objects.filter(user=user, action__in=['SAVED', 'APPLIED']).values_list('job_id', flat=True)
         liked_jobs = Job.objects.filter(id__in=liked_job_ids)
         similar_liked = liked_jobs.filter(Q(job_type=job.job_type) | Q(title__icontains=job.title.split()[0])).count()
@@ -561,7 +530,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
         elif ats_score < 80:
             ats_score_rating = "Good"
 
-        # Smart Suggestions
         suggested_courses = []
         suggested_certifications = []
         suggested_projects = []
@@ -587,7 +555,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
             suggested_certifications.append("AWS Certified Solutions Architect - Professional")
             suggested_projects.append("Contribute to open-source project or build a microservices app")
 
-        # ATS Feedback
         weak_areas = []
         resume_improvements = []
         if ats_score < 80:
@@ -601,7 +568,6 @@ class AnalyzeApplicationView(generics.GenericAPIView):
             weak_areas.append("None - strong keyword matching!")
             resume_improvements.append("No major improvements needed. Good match.")
 
-        # Swipe Recommendation
         swipe_recommendation = ""
         saved_count = SwipeHistory.objects.filter(user=user, action='SAVED').count()
         applied_count = JobApplication.objects.filter(applicant=user).count()
@@ -613,14 +579,12 @@ class AnalyzeApplicationView(generics.GenericAPIView):
         else:
             swipe_recommendation = "Build your swipe history by saving or applying to jobs to receive more customized recommendations."
 
-        # Recommendation Reason
         recommendation_reason = f"Recommended because your resume/profile matches {len(matching_skills)} out of {total} required skills"
         if applied_count > 0:
             recommendation_reason += f" and your previous applications indicate an interest in {job.job_type.replace('_', ' ').title()} positions."
         else:
             recommendation_reason += f" and this role matches your preferred location ({user.preferred_location or 'Remote'})."
 
-        # Other Personalized Recommendations
         other_jobs = Job.objects.filter(is_active=True).exclude(id=job.id)
         swiped_job_ids = SwipeHistory.objects.filter(user=user).values_list('job_id', flat=True)
         applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
@@ -704,7 +668,6 @@ class AnalyticsView(generics.RetrieveAPIView):
         min_comp = stats['min_comp'] or 0
         max_comp = stats['max_comp'] or 0
 
-        # Calculate job-by-job performance
         job_performance = []
         for job in jobs:
             job_apps = job.applications.all()
@@ -765,7 +728,6 @@ class JobSeekerAnalyticsView(generics.RetrieveAPIView):
         avg_comp = applications.aggregate(Avg('compatibility_score'))['compatibility_score__avg'] or 0
         best_ats = applications.aggregate(Max('ats_score'))['ats_score__max'] or 0
         
-        # Calculate status breakdown
         shortlisted = applications.filter(status='SHORTLISTED').count()
         interview = applications.filter(status='INTERVIEW').count()
         selected = applications.filter(status='SELECTED').count()
@@ -773,12 +735,10 @@ class JobSeekerAnalyticsView(generics.RetrieveAPIView):
         saved_count = SwipeHistory.objects.filter(user=user, action='SAVED').count()
         success_rate = int((selected / total_applied) * 100) if total_applied > 0 else 0
         
-        # Profile completion
         fields = [user.skills, user.education, user.experience, user.resume, user.degree, user.linkedin]
         filled = sum(1 for f in fields if f)
         completion_percent = int((filled / len(fields)) * 100) if fields else 0
         
-        # Strongest and missing skills aggregation
         import collections
         all_matched = []
         all_missing = []
@@ -794,7 +754,6 @@ class JobSeekerAnalyticsView(generics.RetrieveAPIView):
         strongest_skills = [item[0] for item in matched_counts.most_common(5)]
         frequently_missing = [item[0] for item in missing_counts.most_common(5)]
         
-        # Suggestions and insights
         suggestions = []
         if not user.resume:
             suggestions.append("Upload a resume to automatically extract skills.")
@@ -807,18 +766,15 @@ class JobSeekerAnalyticsView(generics.RetrieveAPIView):
         elif avg_ats >= 80 and total_applied > 0:
             suggestions.append("Excellent match rate! Keep sending tailored applications.")
             
-        # Recommendations count
         swiped_job_ids = SwipeHistory.objects.filter(user=user).values_list('job_id', flat=True)
         applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
         exclude_ids = set(swiped_job_ids).union(set(applied_job_ids))
         
-        # Recommended Category
         preferred_job_type_display = user.preferred_job_type.replace('_', ' ').title() if user.preferred_job_type else "Backend Development"
         recommended_count = Job.objects.filter(is_active=True).exclude(id__in=exclude_ids).count()
         skipped_count = SwipeHistory.objects.filter(user=user, action='SKIPPED').count()
         total_viewed = SwipeHistory.objects.filter(user=user).values('job_id').distinct().count() + total_applied
         
-        # Calculate jobs matched with compatibility >= 70%
         active_jobs = Job.objects.filter(is_active=True).exclude(id__in=applied_job_ids)
         jobs_matched = 0
         seeker_text = f"{user.skills or ''} {user.extracted_skills or ''} {user.experience or ''} {user.education or ''}".lower()
@@ -944,18 +900,12 @@ class RecommendationView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True, context=context)
         data = serializer.data
 
-        # Check if profile is incomplete
         has_skills = bool((user.skills or '').strip() or (user.extracted_skills or '').strip())
         has_profile_data = has_skills or bool((user.experience or '').strip() or user.resume or (user.education or '').strip())
 
         if not has_profile_data:
-            # User profile is incomplete: return base list with profile_incomplete indicator
             return Response(data[:20])
 
-        # Separate jobs into strong/relevant vs poor matches:
-        # A job is considered genuinely relevant if ATS > 0 and recommendation score >= 35,
-        # OR if general role has recommendation score >= 50.
-        # Irrelevant jobs have 0% ATS match with required skills or severe skill mismatch.
         strong_jobs = [
             j for j in data 
             if ((j.get('ats_score') or 0) > 0 and (j.get('match_score') or 0) >= 35)
@@ -963,14 +913,11 @@ class RecommendationView(generics.ListAPIView):
         ]
 
         if len(strong_jobs) >= 3:
-            # When genuinely relevant jobs are available, exclude obviously irrelevant jobs completely
             filtered_data = strong_jobs
         elif len(strong_jobs) > 0:
-            # If very few strong jobs, put strong jobs first, followed by lower quality matches
             weak_jobs = [j for j in data if j not in strong_jobs and (j.get('match_score') or 0) >= 20]
             filtered_data = strong_jobs + weak_jobs
         else:
-            # If no strong matches available in the database, show closest available matches
             filtered_data = data
 
         def sort_key(j):
@@ -1022,7 +969,6 @@ class AIResumeAnalysisView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         user = request.user
 
-        # Check if a new resume file was uploaded in this request
         if 'resume' in request.FILES:
             uploaded_file = request.FILES['resume']
             import os
@@ -1065,7 +1011,6 @@ class AIResumeAnalysisView(generics.GenericAPIView):
         from .ai_service import get_resume_analysis
         result = get_resume_analysis(resume_text, user_profile)
 
-        # Save to database
         user.resume_score = result.get('resume_score', 0)
         user.resume_strengths = '\n'.join(result.get('strengths', []))
         user.resume_gaps = '\n'.join(result.get('gaps', []))

@@ -53,7 +53,6 @@ class JobSerializer(serializers.ModelSerializer):
                 'resume': bool(user.resume),
             }
 
-            # Optional history for role alignment
             job_titles = self.context.get('favored_job_titles')
             if job_titles is None:
                 from .models import SwipeHistory, JobApplication
@@ -62,7 +61,6 @@ class JobSerializer(serializers.ModelSerializer):
                 job_titles = list(Job.objects.filter(id__in=set(applied_job_ids).union(set(saved_job_ids))).values_list('title', flat=True))
             user_history = {'job_titles': job_titles}
         else:
-            # Baseline candidate skills for unauthenticated guest visitors
             user_profile = {
                 'skills': 'python, javascript, react, typescript, node, sql, postgresql, git, docker, rest apis',
                 'extracted_skills': 'problem solving, communication, cloud',
@@ -179,9 +177,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             
         user = request.user
         
-        # If it's a creation (POST)
         if request.method == 'POST':
-            # Pre-populate fields from job seeker profile if not provided
             if user.is_authenticated and user.role == 'JOB_SEEKER':
                 if not attrs.get('full_name'):
                     attrs['full_name'] = user.full_name
@@ -196,7 +192,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
                 if not attrs.get('address'):
                     attrs['address'] = user.preferred_location or 'Not specified'
             
-            # Validation checks for creation
             if not attrs.get('qualification') or attrs.get('qualification').strip() == '':
                 raise serializers.ValidationError({"qualification": "Qualification is required. Please update your profile."})
             if not attrs.get('full_name') or attrs.get('full_name').strip() == '':
@@ -208,13 +203,10 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             if not attrs.get('experience') or attrs.get('experience').strip() == '':
                 raise serializers.ValidationError({"experience": "Experience is required."})
         
-        # If it's an update (PUT/PATCH)
         else:
-            # If the user is a JOB_SEEKER, they should not be allowed to change status
             if user.is_authenticated and user.role == 'JOB_SEEKER' and 'status' in attrs:
                 raise serializers.ValidationError({"status": "Job seekers cannot modify application status."})
                 
-            # Only validate fields if they are explicitly being updated
             if 'qualification' in attrs and (not attrs.get('qualification') or attrs.get('qualification').strip() == ''):
                 raise serializers.ValidationError({"qualification": "Qualification cannot be blank."})
             if 'full_name' in attrs and (not attrs.get('full_name') or attrs.get('full_name').strip() == ''):

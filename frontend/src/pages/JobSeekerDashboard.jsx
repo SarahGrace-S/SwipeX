@@ -96,7 +96,7 @@ export default function JobSeekerDashboard() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-6 w-full flex items-center justify-between border-b border-white/5">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -114,10 +114,10 @@ export default function JobSeekerDashboard() {
         </button>
       </header>
 
-      {/* Content */}
+      
       <main className="flex-grow px-6 py-8 max-w-7xl mx-auto w-full">
         <div className="space-y-8">
-          {/* Welcome Header */}
+          
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -135,7 +135,7 @@ export default function JobSeekerDashboard() {
             </div>
           </div>
 
-          {/* Personalized Career Dashboard Overview */}
+          
           <div className="glass-card p-6 rounded-3xl border border-purple-500/20 bg-purple-900/5 text-left space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">👤 Personalized Career Dashboard</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -193,7 +193,7 @@ export default function JobSeekerDashboard() {
             </div>
           </div>
 
-          {/* Metrics Grid */}
+          
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="glass-card p-4 rounded-2xl border border-purple-500/10">
               <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Resume Uploaded</span>
@@ -249,10 +249,10 @@ export default function JobSeekerDashboard() {
             </div>
           </div>
 
-          {/* Middle Analytics Hub: Resume & Recommendations */}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Resume Performance & Insights */}
+            
             <div className="lg:col-span-2 glass-card p-6 rounded-3xl border border-purple-500/10 space-y-6">
               <div className="border-b border-white/5 pb-4 flex justify-between items-center">
                 <div>
@@ -270,7 +270,7 @@ export default function JobSeekerDashboard() {
                 )}
               </div>
 
-              {/* Status Alert Banner */}
+              
               {analytics && (
                 <div className={`p-4 rounded-xl border flex items-start gap-3 text-xs text-left ${
                   analytics.resume_performance_status === 'GOOD'
@@ -299,7 +299,7 @@ export default function JobSeekerDashboard() {
                 </div>
               )}
 
-              {/* Real Data Metrics Grid */}
+              
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="bg-white/5 p-3 rounded-xl border border-white/5">
                   <span className="block text-[8px] font-bold text-gray-500 uppercase">Jobs Viewed</span>
@@ -327,7 +327,7 @@ export default function JobSeekerDashboard() {
                 </div>
               </div>
 
-              {/* Skills matching representation */}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="text-left">
                   <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">⭐ Strongest Skills</h4>
@@ -355,7 +355,7 @@ export default function JobSeekerDashboard() {
                 </div>
               </div>
 
-              {/* CSS Charts representing Hiring Funnel */}
+              
               <div className="space-y-3 pt-2">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Hiring Stages Funnel</h4>
                 <div className="space-y-2 text-xs">
@@ -381,7 +381,7 @@ export default function JobSeekerDashboard() {
               </div>
             </div>
 
-            {/* Recommendation Insights Section */}
+            
             <div className="glass-card p-6 rounded-3xl border border-purple-500/10 flex flex-col justify-between">
               <div>
                 <div className="border-b border-white/5 pb-4 mb-4">
@@ -389,7 +389,7 @@ export default function JobSeekerDashboard() {
                   <p className="text-gray-400 text-xs mt-1">Smart matches derived from swipes, saves and preferences.</p>
                 </div>
 
-                {/* Metrics Breakdown */}
+                
                 <div className="grid grid-cols-3 gap-2 text-center mb-4">
                   <div className="bg-white/5 p-2 rounded-lg border border-white/5">
                     <span className="block text-[8px] text-gray-500 uppercase">Recommended</span>
@@ -417,7 +417,7 @@ export default function JobSeekerDashboard() {
                   </div>
                 </div>
 
-                {/* Recommendation Rationale */}
+                
                 <div className="mb-4 text-left">
                   <h4 className="text-[10px] font-bold text-purple-300 uppercase tracking-wider mb-2">Why jobs are recommended</h4>
                   <ul className="space-y-1 text-[11px] text-gray-300">
@@ -429,7 +429,7 @@ export default function JobSeekerDashboard() {
                   </ul>
                 </div>
 
-                {/* Top Categories */}
+                
                 <div className="text-left border-t border-white/5 pt-3">
                   <h4 className="text-[10px] font-bold text-purple-300 uppercase tracking-wider mb-2">Top Recommended Categories</h4>
                   <div className="space-y-1 text-[11px]">
@@ -449,10 +449,10 @@ export default function JobSeekerDashboard() {
             </div>
           </div>
 
-          {/* Lower Quick Access Hub: Notifications & Navigation */}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Left side: Dedicated Notifications Widget (2 columns on lg screens) */}
+            
             <div className="lg:col-span-2 glass-card p-6 rounded-3xl border border-purple-500/10 space-y-4 text-left">
               <div className="flex justify-between items-center border-b border-white/5 pb-4">
                 <div className="flex items-center gap-2">
@@ -538,9 +538,9 @@ export default function JobSeekerDashboard() {
               </div>
             </div>
 
-            {/* Right side: Navigation & Optimization Suggestions (1 column on lg screens) */}
+            
             <div className="space-y-6 text-left">
-              {/* Action Control Center */}
+              
               <div className="space-y-3">
                 <h3 className="text-lg font-bold text-purple-300">Action Control Center</h3>
                 <div className="grid grid-cols-1 gap-2.5">
@@ -568,7 +568,7 @@ export default function JobSeekerDashboard() {
                 </div>
               </div>
 
-              {/* Resume optimization suggestions */}
+              
               <div className="space-y-3">
                 <h3 className="text-lg font-bold text-purple-300">💡 Optimization Suggestions</h3>
                 {analytics?.suggestions?.length > 0 ? (

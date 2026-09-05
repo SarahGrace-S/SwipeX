@@ -37,12 +37,12 @@ export default function Login() {
         password: password,
       });
 
-      // Save tokens and user info in local storage
+      
       localStorage.setItem('access_token', response.data.access);
       localStorage.setItem('refresh_token', response.data.refresh);
       localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      // Redirect based on user role
+      
       const userRole = response.data.user.role;
       if (userRole === 'RECRUITER') {
         navigate('/recruiter');
@@ -75,7 +75,7 @@ export default function Login() {
   return (
     <div className="min-h-screen gradient-bg text-white flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        {/* Brand */}
+        
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -89,7 +89,7 @@ export default function Login() {
           <p className="text-gray-400 text-sm mt-2">Sign in to discover your next career step</p>
         </div>
 
-        {/* Card */}
+        
         <div className="glass-card rounded-2xl p-8 shadow-2xl">
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center space-x-2">

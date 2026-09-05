@@ -13,11 +13,11 @@ export default function ManageJobs() {
 
   const fetchMyJobs = async () => {
     try {
-      // For now, recruiter fetches all jobs they posted. Wait, our JobViewSet /api/jobs/ returns all jobs.
-      // We should filter jobs by the recruiter. Let's pass a query param or filter client side.
-      // We will fetch all jobs and filter by user role/id if needed, but since we updated the backend, 
-      // let's assume we can fetch all jobs and filter here for now, or use a custom endpoint.
-      // Actually, since JobViewSet returns all jobs, and posted_by is included in JobSerializer.
+      
+      
+      
+      
+      
       const res = await api.get('/api/jobs/');
       const user = JSON.parse(localStorage.getItem('user'));
       const myJobs = res.data.filter(j => j.posted_by === user.id);

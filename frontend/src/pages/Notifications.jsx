@@ -5,7 +5,7 @@ import api from '../api';
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ALL'); // 'ALL', 'UNREAD', 'READ'
+  const [filter, setFilter] = useState('ALL'); 
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
@@ -103,7 +103,7 @@ export default function Notifications() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      
       <div className="flex border-b border-white/5 mb-6 gap-6">
         {['ALL', 'UNREAD', 'READ'].map(type => (
           <button
@@ -161,7 +161,7 @@ export default function Notifications() {
                     {new Date(notif.created_at).toLocaleString()}
                   </span>
                   
-                  {/* Action Link for Seeker notifications */}
+                  
                   {!isRecruiter && notif.related_job && (
                     <span 
                       className="text-[10px] text-purple-400 hover:text-purple-300 font-bold hover:underline"
@@ -170,7 +170,7 @@ export default function Notifications() {
                     </span>
                   )}
 
-                  {/* Action Link for Recruiter notifications */}
+                  
                   {isRecruiter && notif.related_job && (
                     <span 
                       className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold hover:underline"

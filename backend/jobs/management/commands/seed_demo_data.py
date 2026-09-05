@@ -9,7 +9,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         User = get_user_model()
         
-        # 1. Look up or create recruiter
         recruiter, r_created = User.objects.get_or_create(
             email='recruiter123@gmail.com',
             defaults={
@@ -24,7 +23,6 @@ class Command(BaseCommand):
             recruiter.save()
             self.stdout.write(f"Created recruiter user: {recruiter.email}")
 
-        # 2. Look up or create seeker
         seeker, s_created = User.objects.get_or_create(
             email='seeker123@gmail.com',
             defaults={
@@ -45,7 +43,6 @@ class Command(BaseCommand):
             seeker.save()
             self.stdout.write(f"Created seeker user: {seeker.email}")
         else:
-            # Ensure seeker has matching skills and preferences for the demo scenarios
             seeker.skills = 'Java, Spring Boot, React, MySQL, Python'
             seeker.degree = 'BE CSE'
             seeker.experience = '2 years'
@@ -55,7 +52,6 @@ class Command(BaseCommand):
             seeker.save()
             self.stdout.write(f"Updated seeker profile skills: {seeker.email}")
 
-        # 3. Create demo jobs
         demo_jobs_data = [
             {
                 'title': 'Full Stack Developer',
@@ -115,7 +111,6 @@ class Command(BaseCommand):
             }
         ]
 
-        # Clear previous demo notifications for these demo jobs to make it idempotent
         for jd in demo_jobs_data:
             Notification.objects.filter(related_job__title=jd['title'], related_job__company=jd['company']).delete()
 
@@ -141,7 +136,6 @@ class Command(BaseCommand):
             if created:
                 seeded_jobs_count += 1
             else:
-                # Update attributes to match definition
                 job.location = jd['location']
                 job.salary = jd['salary']
                 job.experience = jd['experience']
@@ -155,7 +149,6 @@ class Command(BaseCommand):
                 job.posted_by = recruiter
                 job.save()
 
-            # Trigger fresh notifications for the seeker to demonstrate the features
             create_job_notifications(job, seeker)
             self.stdout.write(f"Processed demo job: {job.title} at {job.company}")
 

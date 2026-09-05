@@ -6,14 +6,14 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
 
   if (!job) return null;
 
-  // Process required skills list
+  
   const requiredSkillsList = Array.isArray(job.skills)
     ? job.skills
     : job.skills
     ? job.skills.split(',').map((s) => s.trim()).filter(Boolean)
     : [];
 
-  // Process missing skills list
+  
   let missingSkillsList = Array.isArray(job.missing_skills) ? job.missing_skills : [];
   if (missingSkillsList.length === 0 && job.ai_match_insights?.skills_breakdown) {
     missingSkillsList = job.ai_match_insights.skills_breakdown
@@ -21,20 +21,20 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
       .map((item) => item.skill);
   }
 
-  // Process matching explanations
+  
   const whyPoints = job.ai_match_insights?.why_explanation && Array.isArray(job.ai_match_insights.why_explanation)
     ? job.ai_match_insights.why_explanation
     : job.recommendation_reason
     ? [job.recommendation_reason]
     : [];
 
-  // Scores
+  
   const atsScore = job.ats_score != null ? job.ats_score : (job.match_score || 82);
   const matchScore = job.match_score || (job.ai_match_insights?.match_score || 85);
   const compLevel = job.competition_level || 'LOW';
   const appCount = job.application_count || 0;
 
-  // Formatted date
+  
   const formattedDate = job.posted_date
     ? new Date(job.posted_date).toLocaleDateString(undefined, {
         month: 'short',
@@ -46,12 +46,12 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
   return (
     <>
       <div className="glass-card rounded-3xl p-5 sm:p-6 w-full max-w-[760px] mx-auto shadow-2xl border border-purple-500/20 relative overflow-hidden select-none transition-all duration-300">
-        {/* Ambient background glow */}
+        
         <div className="absolute -top-12 -right-12 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col gap-3">
-          {/* 1. Header: Job Title, Company, Job Type badge */}
+          
           <div className="flex flex-col gap-1">
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight text-left leading-snug line-clamp-2" title={job.title}>
@@ -74,7 +74,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             </div>
           </div>
 
-          {/* 2. Metadata Grid: Location | Salary | Experience | Posted Date */}
+          
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
             <div className="bg-white/[0.03] border border-white/5 px-3 py-2 rounded-xl flex flex-col justify-center">
               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">📍 Location</span>
@@ -102,7 +102,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             </div>
           </div>
 
-          {/* 3. Scores: ATS Match score | Compatibility score | Competition level */}
+          
           <div className="bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-inner">
             <div className="flex flex-col text-left">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">ATS Match</span>
@@ -139,7 +139,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             )}
           </div>
 
-          {/* 4. Missing Skills (highlight skill gaps) */}
+          
           <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-left">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] font-bold text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -164,7 +164,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             </div>
           </div>
 
-          {/* 5. Why this job matches you (SwipeX AI explanation) */}
+          
           <div className="bg-purple-950/20 border border-purple-500/20 rounded-2xl p-3 text-left">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] font-black text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -190,7 +190,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             </div>
           </div>
 
-          {/* 6. Skills Required */}
+          
           <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-left">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -211,7 +211,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             </div>
           </div>
 
-          {/* 7. View Details (expand/collapse additional info without card exploding) */}
+          
           <div className="text-left">
             <button
               type="button"
@@ -247,7 +247,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
             )}
           </div>
 
-          {/* 8. Action buttons: Pass (left), Star (middle), Interested (right) */}
+          
           <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-white/10">
             <button
               type="button"
@@ -279,7 +279,7 @@ export default function JobCard({ job, onSwipeRight, onSwipeLeft }) {
         </div>
       </div>
 
-      {/* Fullscreen Description Modal */}
+      
       {showFullModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="bg-slate-900 border border-purple-500/30 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative text-left">

@@ -18,7 +18,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Email format validation: exact regex & standard domain handling
+  
   const validateEmailFormat = (val) => {
     const trimmed = (val || '').trim();
     if (!trimmed) return 'Email address is required.';
@@ -50,7 +50,7 @@ export default function Register() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // If an error is currently displayed on this field, clear it immediately once the input becomes valid
+    
     if (fieldErrors[name]) {
       const err = validateField(name, value);
       if (!err) {
@@ -71,7 +71,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Mark all as touched on submit
+    
     const allTouched = {
       fullName: true,
       email: true,
@@ -80,7 +80,7 @@ export default function Register() {
     };
     setTouched(allTouched);
 
-    // Validate all fields
+    
     const errors = {
       fullName: validateField('fullName', formData.fullName),
       email: validateField('email', formData.email),
@@ -90,7 +90,7 @@ export default function Register() {
 
     setFieldErrors(errors);
 
-    // Abort if any client-side validation error exists
+    
     if (Object.values(errors).some(Boolean)) {
       return;
     }
@@ -155,7 +155,7 @@ export default function Register() {
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col justify-center items-center py-8 px-4 sm:px-6">
       <div className="w-full max-w-md">
-        {/* Brand */}
+        
         <div className="text-center mb-6">
           <Link to="/" className="inline-flex items-center space-x-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -169,7 +169,7 @@ export default function Register() {
           <p className="text-gray-400 text-xs sm:text-sm mt-1">Discover tailored career opportunities in seconds</p>
         </div>
 
-        {/* Card */}
+        
         <div className="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10">
           {serverError && (
             <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-center space-x-2">
@@ -186,7 +186,7 @@ export default function Register() {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            {/* Full Name */}
+            
             <div>
               <label htmlFor="fullName" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Full Name
@@ -209,7 +209,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Email Address */}
+            
             <div>
               <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Email Address
@@ -232,7 +232,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Password */}
+            
             <div>
               <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Password
@@ -255,7 +255,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Confirm Password */}
+            
             <div>
               <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Confirm Password
@@ -278,7 +278,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Role Dropdown */}
+            
             <div>
               <label htmlFor="role" className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
                 Register As
@@ -296,7 +296,7 @@ export default function Register() {
               </select>
             </div>
 
-            {/* Submit Button */}
+            
             <button
               type="submit"
               disabled={loading}
@@ -306,7 +306,7 @@ export default function Register() {
             </button>
           </form>
 
-          {/* Footer Navigation */}
+          
           <div className="mt-6 text-center text-sm text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors duration-200">

@@ -23,7 +23,6 @@ class UserAuthTests(APITestCase):
         self.assertEqual(response.data['user']['email'], 'john@example.com')
         self.assertEqual(response.data['user']['role'], 'JOB_SEEKER')
         
-        # Verify user is saved in DB and password is secure/hashed
         user = User.objects.get(email='john@example.com')
         self.assertTrue(user.check_password('password123'))
         self.assertNotEqual(user.password, 'password123')
@@ -36,15 +35,12 @@ class UserAuthTests(APITestCase):
         self.assertIn('password', response.data)
 
     def test_user_registration_duplicate_email(self):
-        # Register user once
         self.client.post(self.register_url, self.user_data, format='json')
-        # Try again with same email
         response = self.client.post(self.register_url, self.user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
     def test_user_login_success(self):
-        # Create a user
         User.objects.create_user(
             email='john@example.com',
             full_name='John Doe',

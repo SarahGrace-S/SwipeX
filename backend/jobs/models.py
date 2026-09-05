@@ -83,7 +83,6 @@ class JobApplication(models.Model):
     portfolio = models.URLField(blank=True, default='')
     cover_letter = models.TextField(blank=True, default='')
     
-    # Interview details
     interview_date = models.DateField(null=True, blank=True)
     interview_time = models.TimeField(null=True, blank=True)
     interview_link = models.URLField(blank=True, default='')
@@ -92,7 +91,6 @@ class JobApplication(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='APPLIED')
     applied_at = models.DateTimeField(auto_now_add=True)
 
-    # ATS and Recommendations
     ats_score = models.IntegerField(default=0)
     compatibility_score = models.IntegerField(default=0)
     matched_skills = models.TextField(blank=True, default='')

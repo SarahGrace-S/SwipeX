@@ -41,7 +41,7 @@ export default function SavedJobs() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-4 w-full flex items-center justify-between border-b border-white/5">
         <Link to="/jobseeker" className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">SX</div>
@@ -96,7 +96,6 @@ export default function SavedJobs() {
                   <span>🎯 {entry.job.experience || 'Any'}</span>
                 </div>
 
-                {/* Score indicators */}
                 {!entry.job.profile_incomplete ? (
                   <div className="grid grid-cols-2 gap-4 bg-white/5 border border-white/10 rounded-xl p-3 my-4">
                     <div className="text-center border-r border-white/5">
@@ -114,7 +113,6 @@ export default function SavedJobs() {
                   </p>
                 )}
 
-                {/* Skills breakdown */}
                 {!entry.job.profile_incomplete && (
                   <div className="space-y-2 mt-3">
                     {entry.job.matching_skills?.length > 0 && (
@@ -140,7 +138,6 @@ export default function SavedJobs() {
                   </div>
                 )}
 
-                {/* Card Actions */}
                 <div className="flex items-center justify-end gap-3 mt-5 pt-3 border-t border-white/5">
                   <button 
                     onClick={() => handleUnsave(entry.job.id)}

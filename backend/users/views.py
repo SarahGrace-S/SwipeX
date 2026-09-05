@@ -66,7 +66,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def perform_update(self, serializer):
         user = serializer.save()
         if 'resume' in self.request.FILES and user.resume:
-            # Parse the new resume
             try:
                 parsed_data = parse_resume(user.resume.path)
                 user.extracted_skills = ', '.join(parsed_data.get('skills', []))

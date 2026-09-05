@@ -43,7 +43,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/landing" element={<Home />} />
         
-        {/* Main Application with Sidebar Layout */}
+        
         <Route element={<LayoutWrapper />}>
           <Route path="/discover" element={<JobDiscovery />} />
           <Route path="/dashboard" element={<Dashboard />} />

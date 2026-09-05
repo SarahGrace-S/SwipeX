@@ -16,7 +16,6 @@ User = get_user_model()
 
 class JobAIFeaturesTests(APITestCase):
     def setUp(self):
-        # Create Seeker
         self.seeker = User.objects.create_user(
             email='seeker@example.com',
             full_name='Test Seeker',
@@ -29,7 +28,6 @@ class JobAIFeaturesTests(APITestCase):
             preferred_job_type='FULL_TIME'
         )
 
-        # Create Recruiter
         self.recruiter = User.objects.create_user(
             email='recruiter@example.com',
             full_name='Test Recruiter',
@@ -37,7 +35,6 @@ class JobAIFeaturesTests(APITestCase):
             role='RECRUITER'
         )
 
-        # Create Sample Job
         self.job = Job.objects.create(
             title='Full Stack Developer',
             company='TechCorp',
@@ -72,19 +69,15 @@ class JobAIFeaturesTests(APITestCase):
         self.assertGreaterEqual(insights['match_score'], 20)
         self.assertLessEqual(insights['match_score'], 100)
 
-        # Verify skills breakdown
         breakdown = insights['skills_breakdown']
         matched_skills = [item['skill'] for item in breakdown if item['status'] in ['strong match', 'good match']]
         gap_skills = [item['skill'] for item in breakdown if item['status'] == 'skill gap']
 
-        # Python and React should match
         self.assertIn('Python', matched_skills)
         self.assertIn('React', matched_skills)
-        # AWS and Docker are gaps
         self.assertIn('AWS', gap_skills)
         self.assertIn('Docker', gap_skills)
 
-        # Verify Why explanation
         self.assertTrue(len(insights['why_explanation']) > 0)
 
     def test_resume_analysis_fallback_engine(self):
@@ -107,18 +100,15 @@ class JobAIFeaturesTests(APITestCase):
         self.client.force_authenticate(user=self.seeker)
         url = reverse('ai-career-assistant')
 
-        # Test skills query
         response = self.client.post(url, {'prompt': 'What skills should I learn?'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('response', response.data)
         self.assertTrue(len(response.data['response']) > 10)
 
-        # Test resume query
         response = self.client.post(url, {'prompt': 'How can I improve my resume?'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('STAR', response.data['response'])
 
-        # Test empty prompt error
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -139,7 +129,6 @@ class JobAIFeaturesTests(APITestCase):
         self.assertIn('Key Responsibilities', desc)
         self.assertIn('Required Skills & Qualifications', desc)
 
-        # Missing role error
         response = self.client.post(url, {'skills': 'Python'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -147,16 +136,13 @@ class JobAIFeaturesTests(APITestCase):
         self.client.force_authenticate(user=self.seeker)
         url = reverse('swipe-action')
 
-        # Test Save
         res_save = self.client.post(url, {'job_id': self.job.id, 'action': 'SAVED'}, format='json')
         self.assertIn(res_save.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED])
         self.assertTrue(SwipeHistory.objects.filter(user=self.seeker, job=self.job, action='SAVED').exists())
 
-        # Test Skip
         res_skip = self.client.post(url, {'job_id': self.job.id, 'action': 'SKIPPED'}, format='json')
         self.assertIn(res_skip.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED])
 
-        # Test Invalid action
         res_invalid = self.client.post(url, {'job_id': self.job.id, 'action': 'INVALID_ACTION'}, format='json')
         self.assertEqual(res_invalid.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -171,13 +157,11 @@ class JobAIFeaturesTests(APITestCase):
         self.assertIn('saved_jobs_count', response.data)
         self.assertIn('total_viewed', response.data)
 
-        # Recruiter forbidden check
         self.client.force_authenticate(user=self.recruiter)
         recruiter_response = self.client.get(url)
         self.assertEqual(recruiter_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_guest_discovery_and_swiping(self):
-        # 1. Unauthenticated GET /api/jobs/
         res_jobs = self.client.get('/api/jobs/')
         self.assertEqual(res_jobs.status_code, status.HTTP_200_OK)
         self.assertGreater(len(res_jobs.data), 0)
@@ -187,18 +171,15 @@ class JobAIFeaturesTests(APITestCase):
         self.assertIsNotNone(first_job.get('ai_match_insights'))
         self.assertFalse(first_job.get('profile_incomplete', False))
 
-        # 2. Unauthenticated POST /api/swipe/ (guest swipe)
         url = reverse('swipe-action')
         res_swipe = self.client.post(url, {'job_id': self.job.id, 'action': 'SAVED'}, format='json')
         self.assertIn(res_swipe.status_code, [status.HTTP_200_OK, status.HTTP_201_CREATED])
 
-        # 3. Unauthenticated GET /api/saved-jobs/
         res_saved = self.client.get(reverse('saved-jobs'))
         self.assertEqual(res_saved.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(res_saved.data), 1)
 
     def test_recommendation_endpoint_prioritization(self):
-        # Create an irrelevant job with 0% ATS match (UI/UX Designer)
         irrelevant_job = Job.objects.create(
             title='UI/UX Designer',
             company='DesignCo',
@@ -215,7 +196,6 @@ class JobAIFeaturesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0)
 
-        # The relevant job (Full Stack Developer) should rank before or exclude the irrelevant job
         top_job = response.data[0]
         self.assertEqual(top_job['id'], self.job.id)
         self.assertGreater(top_job['ats_score'], 0)

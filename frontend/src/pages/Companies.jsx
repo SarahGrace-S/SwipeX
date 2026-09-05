@@ -4,7 +4,7 @@ import api from '../api';
 
 export default function Companies() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeType = searchParams.get('type') || 'MNC'; // Default to MNC
+  const activeType = searchParams.get('type') || 'MNC'; 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export default function Companies() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-4 w-full flex items-center justify-between border-b border-white/5">
         <Link to="/jobseeker" className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">SX</div>
@@ -52,7 +52,7 @@ export default function Companies() {
         </h1>
         <p className="text-gray-400 text-sm mb-8">Filter opportunities by company environment</p>
 
-        {/* Category Tabs */}
+        
         <div className="grid grid-cols-3 gap-2 mb-8 bg-white/5 p-1 rounded-xl border border-white/5">
           <button
             onClick={() => setCompanyType('MNC')}

@@ -106,7 +106,7 @@ export default function Recommendations() {
                 </div>
               </div>
 
-              {/* Skills breakdown */}
+              
               {job.matching_skills && job.matching_skills.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Matching Skills</p>

@@ -43,7 +43,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='JOB_SEEKER')
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # Seeker profile fields
     phone = models.CharField(max_length=20, blank=True, default='')
     skills = models.TextField(blank=True, default='')
     education = models.TextField(blank=True, default='')
@@ -59,7 +58,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     github = models.URLField(blank=True, default='')
     portfolio = models.URLField(blank=True, default='')
     
-    # ATS and Smart Recommendation fields
     extracted_skills = models.TextField(blank=True, default='')
     resume_summary = models.TextField(blank=True, default='')
     preferred_job_type = models.CharField(max_length=50, blank=True, default='')
@@ -67,13 +65,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     projects = models.TextField(blank=True, default='')
     certificates = models.TextField(blank=True, default='')
     
-    # AI Resume Analysis fields
     resume_score = models.IntegerField(default=0)
     resume_strengths = models.TextField(blank=True, default='')
     resume_gaps = models.TextField(blank=True, default='')
     resume_improvements = models.TextField(blank=True, default='')
 
-    # Recruiter company fields
     company_name = models.CharField(max_length=255, blank=True, default='')
     company_logo = models.FileField(upload_to='company_logos/', blank=True, null=True)
     company_website = models.URLField(blank=True, default='')

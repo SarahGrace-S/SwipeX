@@ -10,7 +10,7 @@ export default function Dashboard() {
     const storedUser = localStorage.getItem('user');
 
     if (!token || !storedUser) {
-      // Clear anything left and redirect to login
+      
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col justify-between">
-      {/* Header */}
+      
       <header className="max-w-7xl mx-auto px-6 py-6 w-full flex items-center justify-between border-b border-white/5">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-lg">
@@ -55,15 +55,15 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {/* Main Content */}
+      
       <main className="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col items-center justify-center">
         <div className="glass-card rounded-3xl p-10 md:p-12 w-full max-w-2xl shadow-2xl relative overflow-hidden border border-purple-500/10">
-          {/* Subtle background glows inside card */}
+          
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
 
           <div className="relative z-10 text-center">
-            {/* User Avatar Circle */}
+            
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-2xl font-bold shadow-lg shadow-purple-500/20 mx-auto mb-6">
               {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
             </div>
@@ -110,7 +110,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Footer */}
+      
       <footer className="border-t border-white/5 py-8 text-center text-xs text-gray-500">
         <p>&copy; {new Date().getFullYear()} SwipeX Inc. All rights reserved. Designed for intelligent job search.</p>
       </footer>

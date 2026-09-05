@@ -25,7 +25,7 @@ export default function Analytics() {
   const fetchRecentApplicants = async () => {
     try {
       const res = await api.get('/api/applications/');
-      // Show top 5 recent applicants
+      
       setRecentApplicants(res.data.slice(0, 5));
     } catch (err) {
       console.error(err);
@@ -60,10 +60,10 @@ export default function Analytics() {
 
       {data && (
         <div className="space-y-8 mb-8">
-          {/* Visualizations Grid */}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Status Distribution (Simple CSS Bar Chart) */}
+            
             <div className="glass-card p-6 rounded-3xl border border-indigo-500/20 flex flex-col justify-between">
               <div>
                 <h2 className="text-lg font-bold mb-4">📊 Application Status Breakdown</h2>
@@ -78,7 +78,7 @@ export default function Analytics() {
               </div>
             </div>
             
-            {/* Shortlist Rate & Funnel Visualization */}
+            
             <div className="glass-card p-6 rounded-3xl border border-indigo-500/20 flex flex-col justify-between">
               <div className="w-full text-left">
                 <h2 className="text-lg font-bold mb-1">🎯 Hiring Funnel</h2>
@@ -121,7 +121,7 @@ export default function Analytics() {
               </div>
             </div>
 
-            {/* ATS vs Compatibility Distribution */}
+            
             <div className="glass-card p-6 rounded-3xl border border-indigo-500/20 flex flex-col justify-between">
               <div>
                 <h2 className="text-lg font-bold mb-1">⚡ Match Distributions</h2>
@@ -129,7 +129,7 @@ export default function Analytics() {
               </div>
 
               <div className="space-y-4">
-                {/* ATS Section */}
+                
                 <div className="border-b border-white/5 pb-3">
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-gray-300 font-semibold">ATS Scores</span>
@@ -153,7 +153,7 @@ export default function Analytics() {
                   </div>
                 </div>
                 
-                {/* Compatibility Section */}
+                
                 <div>
                   <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-gray-300 font-semibold">Compatibility Scores</span>
@@ -186,7 +186,7 @@ export default function Analytics() {
         </div>
       )}
 
-      {/* Job Performance Section */}
+      
       {data && data.job_performance && (
         <div className="glass-card p-6 rounded-3xl border border-indigo-500/20 mb-8">
           <h2 className="text-xl font-bold mb-2 text-left">📈 Job Performance</h2>

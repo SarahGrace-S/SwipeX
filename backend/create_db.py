@@ -3,7 +3,6 @@ import sys
 import psycopg2
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 db_name = os.getenv('DB_NAME', 'swipex')
@@ -18,7 +17,6 @@ if db_password == 'YOUR_PASSWORD_HERE' or not db_password:
 
 print(f"Connecting to PostgreSQL server on {db_host}:{db_port} as user '{db_user}'...")
 try:
-    # Connect to the default 'postgres' database to verify connection and manage DBs
     conn = psycopg2.connect(
         dbname='postgres',
         user=db_user,
@@ -29,7 +27,6 @@ try:
     conn.autocommit = True
     cursor = conn.cursor()
     
-    # Check if database exists
     cursor.execute(f"SELECT 1 FROM pg_database WHERE datname = %s;", (db_name,))
     exists = cursor.fetchone()
     

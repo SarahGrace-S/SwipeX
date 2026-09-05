@@ -139,7 +139,7 @@ export default function ViewApplicants() {
                   <p className="text-gray-400 text-xs mb-3">📅 Applied Date: {new Date(app.applied_at).toLocaleDateString()}</p>
                   
                   
-                  {/* ATS Analytics */}
+                  
                   <div className="mt-3 mb-3 p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
                     <div className="flex items-center gap-4 flex-wrap border-b border-white/5 pb-2">
                       <div className="flex flex-col">
@@ -168,7 +168,7 @@ export default function ViewApplicants() {
                       </div>
                     </div>
 
-                    {/* Resume Analysis Summary & Snapshot */}
+                    
                     <div className="text-xs text-gray-300 space-y-1.5 pt-1">
                       {app.resume_summary && (
                         <p><span className="font-semibold text-white">Summary:</span> {app.resume_summary}</p>
@@ -191,7 +191,7 @@ export default function ViewApplicants() {
                       )}
                     </div>
 
-                    {/* Keyword Match details */}
+                    
                     <div className="flex flex-col gap-1 text-[11px] border-t border-white/5 pt-2">
                       {app.matched_skills && (
                         <p className="text-gray-300"><span className="text-emerald-400 font-bold">✓ Matched Keywords:</span> {app.matched_skills.split(',').join(', ')}</p>

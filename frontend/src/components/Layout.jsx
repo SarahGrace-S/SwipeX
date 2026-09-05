@@ -6,7 +6,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen gradient-bg text-white flex flex-col md:flex-row">
-      {/* Mobile Top Header */}
+      
       <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-sm text-white">SX</div>
@@ -20,10 +20,10 @@ export default function Layout({ children }) {
         </button>
       </div>
 
-      {/* Sidebar */}
+      
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Mobile Sidebar Overlay Backdrop */}
+      
       {sidebarOpen && (
         <div 
           onClick={() => setSidebarOpen(false)}
@@ -31,7 +31,7 @@ export default function Layout({ children }) {
         ></div>
       )}
       
-      {/* Main content area */}
+      
       <div className="flex-1 overflow-y-auto h-[calc(100vh-65px)] md:h-screen relative">
         {children}
       </div>

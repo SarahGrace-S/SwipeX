@@ -89,7 +89,7 @@ export default function Profile() {
     );
   }
 
-  // Calculate profile completion
+  
   const profileFields = [
     'full_name', 'phone', 'skills', 'degree', 'college', 'graduation_year', 'cgpa',
     'previous_company', 'years_of_experience', 'linkedin', 'github', 'portfolio', 'projects', 'certificates'
@@ -106,7 +106,7 @@ export default function Profile() {
 
       <main className="max-w-2xl mx-auto w-full px-6 py-12 flex-grow">
         <div className="glass-card p-8 rounded-3xl border border-purple-500/20 shadow-2xl relative overflow-hidden">
-          {/* Glows */}
+          
           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10">
@@ -139,7 +139,7 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Progress Bar */}
+              
               <div className="mb-6 bg-black/20 rounded-full h-2 w-full overflow-hidden border border-white/5">
                 <div 
                   className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-full transition-all duration-500" 

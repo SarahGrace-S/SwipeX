@@ -31,7 +31,7 @@ export default function Sidebar({ isOpen, onClose }) {
       }
     };
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 5000); // Check every 5 seconds for instant alerts
+    const interval = setInterval(fetchUnreadCount, 5000); 
     return () => clearInterval(interval);
   }, [user]);
 
@@ -79,7 +79,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <div className={`w-64 border-r border-white/5 bg-slate-950/90 md:bg-black/30 backdrop-blur-xl flex flex-col h-screen fixed md:sticky top-0 left-0 z-50 transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      {/* Sidebar Header */}
+      
       <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
         <Link to="/" className="flex items-center space-x-2.5">
           <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr from-${themeColor}-500 to-${themeColor}-400 flex items-center justify-center font-bold text-base shadow-md text-white`}>
@@ -97,7 +97,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </button>
       </div>
 
-      {/* Navigation List */}
+      
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2.5 space-y-1">
         {links.map((link) => {
           const isActive = location.pathname === link.path;
@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen, onClose }) {
         })}
       </nav>
 
-      {/* Sidebar Footer */}
+      
       <div className="p-3.5 border-t border-white/5 bg-black/20">
         {user ? (
           <>
